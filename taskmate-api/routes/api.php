@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfileLinkController;
+use App\Http\Controllers\TaskController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/auth/register', [AuthController::class, 'register']);
@@ -35,4 +36,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/users/{user}/cv', [ProfileController::class, 'downloadCv']);
     Route::get('/users/{user}', [ProfileController::class, 'show']);
+
+    Route::get('/tasks', [TaskController::class, 'index']);
+    Route::get('/my/tasks', [TaskController::class, 'myTasks']);
+    Route::post('/tasks', [TaskController::class, 'store']);
+    Route::get('/tasks/{task}', [TaskController::class, 'show']);
+    Route::put('/tasks/{task}', [TaskController::class, 'update']);
+    Route::patch('/tasks/{task}/cancel', [TaskController::class, 'cancel']);
+    Route::delete('/tasks/{task}', [TaskController::class, 'destroy']);
 });

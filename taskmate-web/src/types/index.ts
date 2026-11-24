@@ -62,9 +62,17 @@ export interface PublicUser {
   created_at: string
 }
 
+export type TaskSort = "-created_at" | "-reward" | "deadline" | "team_size"
+
+export interface TaskUploader {
+  id: number
+  name: string
+  avatar: string | null
+  average_rating: number | null
+}
+
 export interface Task {
   id: number
-  uploader_id: number
   title: string
   description: string
   team_size: number
@@ -72,12 +80,61 @@ export interface Task {
   reward: string
   status: TaskStatus
   deadline: string | null
+  skills: string[]
+  created_at: string
   accepted_count: number
   open_slots: number
   is_full: boolean
-  uploader?: PublicUser
-  created_at: string
-  updated_at: string
+  applications_count?: number
+  uploader?: TaskUploader
+  is_owner: boolean
+  my_application_status: ApplicationStatus | null
+}
+
+export interface TaskFilters {
+  search?: string
+  type?: TaskType
+  status?: TaskStatus
+  skill?: string
+  min_reward?: number
+  max_reward?: number
+  has_open_slots?: boolean
+  uploader_id?: number
+  sort?: TaskSort
+  page?: number
+  per_page?: number
+}
+
+export interface TaskPayload {
+  title: string
+  description: string
+  team_size: number
+  type: TaskType
+  reward: number
+  deadline: string | null
+  skills: string[]
+}
+
+export interface PaginationMeta {
+  current_page: number
+  last_page: number
+  per_page: number
+  total: number
+  from: number | null
+  to: number | null
+}
+
+export interface PaginationLinks {
+  first: string | null
+  last: string | null
+  prev: string | null
+  next: string | null
+}
+
+export interface Paginated<T> {
+  data: T[]
+  links: PaginationLinks
+  meta: PaginationMeta
 }
 
 export interface Application {

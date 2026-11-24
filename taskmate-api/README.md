@@ -51,7 +51,45 @@ PUT    /api/v1/profile/links/{link}     # Bearer token required
 DELETE /api/v1/profile/links/{link}     # Bearer token required
 GET    /api/v1/users/{user}             # Bearer token required
 GET    /api/v1/users/{user}/cv          # Bearer token required
+
+GET    /api/v1/tasks                    # Bearer token required
+GET    /api/v1/tasks/{task}             # Bearer token required
+POST   /api/v1/tasks                    # Bearer token required
+PUT    /api/v1/tasks/{task}             # Bearer token required
+PATCH  /api/v1/tasks/{task}/cancel      # Bearer token required
+DELETE /api/v1/tasks/{task}             # Bearer token required
+GET    /api/v1/my/tasks                 # Bearer token required
 ```
+
+## Tasks
+
+Tasks support search, filtering, sorting, and pagination through spatie
+query-builder parameters:
+
+```
+GET /api/v1/tasks?filter[search]=dashboard&filter[type]=paid
+    &filter[skill]=Laravel&filter[min_reward]=50&filter[max_reward]=500
+    &filter[has_open_slots]=1&sort=-reward&page=2&per_page=12
+```
+
+Allowed filters: `search` (title and description), `type`, `status`, `skill`
+(comma-separated, matches any), `min_reward`, `max_reward`, `has_open_slots`,
+and `uploader_id`. Allowed sorts: `created_at`, `reward`, `deadline`, and
+`team_size`; prefix with `-` for descending. The public list hides cancelled and
+completed tasks unless `filter[status]` is provided, while `/my/tasks` includes
+every status and only tasks owned by the authenticated user.
+
+Business rules:
+
+- Only the uploader can update, cancel, or delete a task.
+- Tasks can be updated or cancelled only while `open` or `full`.
+- The type cannot change once the task has applications.
+- Team size cannot drop below the number of accepted members.
+- A task with accepted members cannot be deleted; cancel it instead.
+- Cancelling rejects all pending applications.
+- List responses return `{ data, links, meta }`; single-task responses return
+  `{ data, message }`. State-rule violations return `422`; delete conflicts
+  return `409`.
 
 ## Setup
 

@@ -29,7 +29,7 @@ TaskMate connects **task uploaders** (people with a project or task that needs h
 - **Sanctum API tokens**: registration and login issue a Laravel Sanctum personal access token used as a Bearer token for protected requests
 - **Email verification**: new email/password accounts receive a 6-character mixed verification code (for example `45XC78`) plus a verification link
 - **Social authentication**: sign in or register with **Google** or **GitHub** via Laravel Socialite
-- **Task marketplace**: browse and search tasks posted by other users
+- **Task marketplace**: post, browse, search, filter, and sort tasks; filter by type, skill, reward, or open slots
 - **Unlimited applications**: users can apply to as many tasks as they like
 - **Accept / reject workflow**: uploaders review each applicant's profile and decide
 - **Team slots**: each task has a defined team size; once the team is full, applications close
@@ -103,7 +103,7 @@ The `taskmate-api/` folder contains a Laravel application that exposes a JSON RE
 - Email verification for new accounts
 - Social authentication (OAuth) with **Google** and **GitHub** through Laravel Socialite
 - User profiles, CV upload, and profile links
-- Task creation, listing, update, and deletion
+- Task creation, listing, search/filter/sort, update, cancellation, and deletion
 - Applications and the accept / reject workflow
 - Team slot management (full / open logic, member leave handling)
 - Direct messaging between applicants and task uploaders
@@ -169,11 +169,21 @@ DELETE /api/v1/profile/links/{link}     # Bearer token required
 
 GET    /api/v1/users/{user}             # Bearer token required
 GET    /api/v1/users/{user}/cv          # Bearer token required
+
+GET    /api/v1/tasks                    # Bearer token required
+GET    /api/v1/tasks/{task}             # Bearer token required
+POST   /api/v1/tasks                    # Bearer token required
+PUT    /api/v1/tasks/{task}             # Bearer token required
+PATCH  /api/v1/tasks/{task}/cancel      # Bearer token required
+DELETE /api/v1/tasks/{task}             # Bearer token required
+GET    /api/v1/my/tasks                 # Bearer token required
 ```
 
 Protected routes require the Sanctum Bearer token returned by register, login,
-or the social auth callback. Task, application, and messaging endpoints arrive
-in later phases.
+or the social auth callback. Task listing accepts spatie query parameters such
+as `filter[search]`, `filter[type]`, `filter[skill]`, `filter[min_reward]`,
+`filter[max_reward]`, `filter[has_open_slots]`, `sort`, and `page`. Application
+and messaging endpoints arrive in later phases.
 
 ---
 
@@ -186,8 +196,9 @@ The `taskmate-web/` folder contains a React single-page application that consume
 - Authentication screens and Sanctum Bearer token session handling
 - Email verification code entry and resend screen
 - Social login with Google and GitHub plus OAuth callback handling
-- Task browsing, search, and detail pages
-- Task creation and management for uploaders
+- Task browsing, search, filters, sorting, and pagination
+- Task detail, creation, and editing for uploaders
+- My Tasks management with status tabs and cancel actions
 - Application flow for applicants
 - Applicant review screen for uploaders (profile, CV, links)
 - Team and slot overview
@@ -354,11 +365,11 @@ npm run test
 - [x] Social authentication (Google & GitHub)
 - [x] Authentication and user profiles
 - [x] CV upload and profile links
-- [ ] Task CRUD and browsing
+- [x] Task CRUD and browsing
 - [ ] Applications and accept / reject flow
 - [ ] Team slot management
 - [ ] Direct messaging
-- [ ] Paid / points-exchange options
+- [x] Paid / points-exchange options
 - [ ] Reviews
 - [ ] Notifications
 - [ ] Deployment
