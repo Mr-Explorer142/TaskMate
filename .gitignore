@@ -1,0 +1,120 @@
+# ==========================================
+# TaskMate - root .gitignore
+# Covers: taskmate-api/ (Laravel) and taskmate-web/ (React)
+# ==========================================
+
+# ---------- Environment files ----------
+.env
+.env.*
+!.env.example
+taskmate-api/.env
+taskmate-api/.env.*
+!taskmate-api/.env.example
+taskmate-web/.env
+taskmate-web/.env.*
+!taskmate-web/.env.example
+
+# ---------- Backend: Laravel (taskmate-api/) ----------
+taskmate-api/vendor/
+taskmate-api/node_modules/
+taskmate-api/public/hot
+taskmate-api/public/storage
+taskmate-api/public/build
+taskmate-api/storage/*.key
+taskmate-api/storage/framework/cache/*
+taskmate-api/storage/framework/sessions/*
+taskmate-api/storage/framework/views/*
+taskmate-api/storage/framework/testing/*
+taskmate-api/storage/logs/*
+taskmate-api/storage/app/public/*
+!taskmate-api/storage/app/public/.gitignore
+taskmate-api/bootstrap/cache/*.php
+taskmate-api/database/*.sqlite
+taskmate-api/database/*.sqlite-journal
+taskmate-api/.phpunit.result.cache
+taskmate-api/.phpunit.cache/
+taskmate-api/phpunit.xml.bak
+taskmate-api/auth.json
+taskmate-api/Homestead.json
+taskmate-api/Homestead.yaml
+taskmate-api/.phpactor.json
+taskmate-api/.php-cs-fixer.cache
+taskmate-api/npm-debug.log
+taskmate-api/yarn-error.log
+
+# Keep empty Laravel storage folders tracked
+!taskmate-api/storage/framework/cache/.gitkeep
+!taskmate-api/storage/framework/sessions/.gitkeep
+!taskmate-api/storage/framework/views/.gitkeep
+!taskmate-api/storage/framework/testing/.gitkeep
+!taskmate-api/storage/logs/.gitkeep
+
+# ---------- Frontend: React (taskmate-web/) ----------
+taskmate-web/node_modules/
+taskmate-web/dist/
+taskmate-web/build/
+taskmate-web/.vite/
+taskmate-web/.cache/
+taskmate-web/.parcel-cache/
+taskmate-web/.eslintcache
+taskmate-web/coverage/
+taskmate-web/*.local
+taskmate-web/*.tsbuildinfo
+
+# ---------- Dependency / package manager logs ----------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-store/
+
+# ---------- Uploads (user CVs, images) ----------
+taskmate-api/storage/app/cvs/
+taskmate-api/storage/app/uploads/
+
+# ---------- Logs ----------
+*.log
+logs/
+
+# ---------- Testing / coverage ----------
+coverage/
+.nyc_output/
+
+# ---------- Build artifacts ----------
+dist/
+build/
+*.zip
+*.tar.gz
+
+# ---------- IDEs and editors ----------
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# ---------- AI coding tools ----------
+.opencode/
+.claude/
+.cursor/
+
+# ---------- OS files ----------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ---------- Misc ----------
+*.bak
+*.tmp
+*.temp
