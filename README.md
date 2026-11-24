@@ -26,8 +26,9 @@ TaskMate connects **task uploaders** (people with a project or task that needs h
 
 ## Features
 
-- **Email verification**: new accounts must verify their email address before accessing the app
-- **Social authentication**: sign in or register with third-party providers via Laravel Socialite
+- **Sanctum API tokens**: registration and login issue a Laravel Sanctum personal access token used as a Bearer token for protected requests
+- **Email verification**: new email/password accounts receive a 6-character mixed verification code (for example `45XC78`) plus a verification link
+- **Social authentication**: sign in or register with **Google** or **GitHub** via Laravel Socialite
 - **Task marketplace**: browse and search tasks posted by other users
 - **Unlimited applications**: users can apply to as many tasks as they like
 - **Accept / reject workflow**: uploaders review each applicant's profile and decide
@@ -73,7 +74,7 @@ Is the team full?
 | Layer      | Technology                                   |
 | ---------- | -------------------------------------------- |
 | Backend    | Laravel (PHP), REST API                      |
-| Auth       | Laravel email verification, Laravel Socialite |
+| Auth       | Laravel Sanctum API tokens, email verification, Laravel Socialite (Google & GitHub) |
 | Database   | MySQL                                        |
 | Frontend   | React                                        |
 | State      | Zustand                                      |
@@ -98,9 +99,9 @@ The `taskmate-api/` folder contains a Laravel application that exposes a JSON RE
 
 ### Responsibilities
 
-- Authentication and authorization
+- Authentication and authorization with Laravel Sanctum API tokens
 - Email verification for new accounts
-- Social authentication (OAuth) through Laravel Socialite
+- Social authentication (OAuth) with **Google** and **GitHub** through Laravel Socialite
 - User profiles, CV upload, and profile links
 - Task creation, listing, update, and deletion
 - Applications and the accept / reject workflow
@@ -123,12 +124,15 @@ The `taskmate-api/` folder contains a Laravel application that exposes a JSON RE
 
 ### Authentication
 
-- **Email verification**: users registering with email and password receive a verification link and must verify before using protected features.
-- **Social auth**: Laravel Socialite handles the OAuth redirect and callback for supported providers. Users who sign in through a provider are matched to an existing account by email or a new account is created.
+TaskMate uses **Laravel Sanctum** personal access tokens for API authentication.
+
+- **Token auth**: `POST /api/v1/auth/register` and `POST /api/v1/auth/login` return a Sanctum personal access token. The React client stores it and sends it as `Authorization: Bearer <token>` on every protected request. `POST /api/v1/auth/logout` revokes the current token, and `GET /api/v1/auth/me` returns the authenticated user.
+- **Email verification**: registration sends a **6-character mixed letter/digit code** (for example `45XC78`) to the user's email, along with a verification link. Users can verify from the link or enter the code on the verification page, and can request a fresh code while signed in. Codes expire after 15 minutes.
+- **Social auth**: Laravel Socialite handles the OAuth redirect and callback for **Google** and **GitHub**. Accounts are matched to an existing user by email, or a new account is created and marked as verified. The callback redirects to the frontend with a Sanctum API token.
 
 ### Key Business Rules
 
-1. Users must verify their email address before accessing protected features.
+1. New email/password accounts are prompted to verify their email with a 6-character code; social sign-ins are verified automatically.
 2. A user can apply to an unlimited number of tasks.
 3. Only the task uploader can accept or reject applications.
 4. Applications are only accepted while the team has open slots.
@@ -138,42 +142,38 @@ The `taskmate-api/` folder contains a Laravel application that exposes a JSON RE
 
 ### Example Endpoint Groups
 
-> Adjust these to match your actual routes.
+Authentication endpoints (all under `/api/v1`):
 
 ```
-POST   /api/register
-POST   /api/login
-POST   /api/logout
+POST   /api/v1/auth/register
+POST   /api/v1/auth/login
+POST   /api/v1/auth/logout              # Bearer token required
+GET    /api/v1/auth/me                  # Bearer token required
 
-GET    /api/email/verify/{id}/{hash}
-POST   /api/email/verification-notification
+POST   /api/v1/auth/email/verify
+POST   /api/v1/auth/email/resend        # Bearer token required
 
-GET    /api/auth/{provider}/redirect
-GET    /api/auth/{provider}/callback
+GET    /api/v1/auth/google/redirect
+GET    /api/v1/auth/google/callback
+GET    /api/v1/auth/github/redirect
+GET    /api/v1/auth/github/callback
 
-GET    /api/profile
-PUT    /api/profile
-POST   /api/profile/cv
-POST   /api/profile/links
-DELETE /api/profile/links/{id}
+PUT    /api/v1/profile                  # Bearer token required
+POST   /api/v1/profile/cv               # Bearer token required
+DELETE /api/v1/profile/cv               # Bearer token required
+GET    /api/v1/profile/links            # Bearer token required
+POST   /api/v1/profile/links            # Bearer token required
+PATCH  /api/v1/profile/links/reorder    # Bearer token required
+PUT    /api/v1/profile/links/{link}     # Bearer token required
+DELETE /api/v1/profile/links/{link}     # Bearer token required
 
-GET    /api/tasks
-POST   /api/tasks
-GET    /api/tasks/{id}
-PUT    /api/tasks/{id}
-DELETE /api/tasks/{id}
-
-POST   /api/tasks/{id}/apply
-GET    /api/tasks/{id}/applications
-PATCH  /api/applications/{id}/accept
-PATCH  /api/applications/{id}/reject
-DELETE /api/tasks/{id}/leave
-
-GET    /api/messages
-POST   /api/messages
-
-POST   /api/tasks/{id}/reviews
+GET    /api/v1/users/{user}             # Bearer token required
+GET    /api/v1/users/{user}/cv          # Bearer token required
 ```
+
+Protected routes require the Sanctum Bearer token returned by register, login,
+or the social auth callback. Task, application, and messaging endpoints arrive
+in later phases.
 
 ---
 
@@ -183,9 +183,9 @@ The `taskmate-web/` folder contains a React single-page application that consume
 
 ### Responsibilities
 
-- Authentication screens and session handling
-- Email verification notice and resend screen
-- Social login buttons and OAuth callback handling
+- Authentication screens and Sanctum Bearer token session handling
+- Email verification code entry and resend screen
+- Social login with Google and GitHub plus OAuth callback handling
 - Task browsing, search, and detail pages
 - Task creation and management for uploaders
 - Application flow for applicants
@@ -263,7 +263,7 @@ DB_PASSWORD=
 
 FRONTEND_URL=http://localhost:5173
 
-# Mail (used for email verification)
+# Mail (used for 6-character email verification codes)
 MAIL_MAILER=smtp
 MAIL_HOST=127.0.0.1
 MAIL_PORT=2525
@@ -272,16 +272,20 @@ MAIL_PASSWORD=null
 MAIL_FROM_ADDRESS="noreply@taskmate.test"
 MAIL_FROM_NAME="${APP_NAME}"
 
-# Social auth (Laravel Socialite) - add one set per provider you enable
+# Social auth (Laravel Socialite)
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
-GOOGLE_REDIRECT_URI=http://localhost:8000/api/auth/google/callback
+GOOGLE_REDIRECT_URI=http://localhost:8000/api/v1/auth/google/callback
+
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+GITHUB_REDIRECT_URI=http://localhost:8000/api/v1/auth/github/callback
 ```
 
 ### Frontend (`taskmate-web/.env`)
 
 ```env
-VITE_API_URL=http://localhost:8000/api
+VITE_API_URL=http://localhost:8000/api/v1
 ```
 
 > Adjust variable names to match your setup (for example, `REACT_APP_API_URL` if you are not using Vite).
@@ -346,9 +350,10 @@ npm run test
 ## Roadmap
 
 - [x] Email verification
-- [x] Social authentication (Laravel Socialite)
-- [ ] Authentication and user profiles
-- [ ] CV upload and profile links
+- [x] Sanctum API token authentication
+- [x] Social authentication (Google & GitHub)
+- [x] Authentication and user profiles
+- [x] CV upload and profile links
 - [ ] Task CRUD and browsing
 - [ ] Applications and accept / reject flow
 - [ ] Team slot management
