@@ -14,6 +14,16 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 class TaskFactory extends Factory
 {
     /**
+     * Skills available for generated tasks.
+     *
+     * @var array<int, string>
+     */
+    private const SKILLS = [
+        'Laravel', 'React', 'PHP', 'MySQL', 'UI Design', 'Figma', 'Content Writing',
+        'SEO', 'Python', 'Data Entry', 'Video Editing', 'Translation',
+    ];
+
+    /**
      * Define the model's default state.
      *
      * @return array<string, mixed>
@@ -29,6 +39,7 @@ class TaskFactory extends Factory
             'reward' => fake()->randomFloat(2, 0, 500),
             'status' => TaskStatus::Open,
             'deadline' => fake()->dateTimeBetween('+1 week', '+2 months'),
+            'skills' => fake()->randomElements(self::SKILLS, fake()->numberBetween(2, 5)),
         ];
     }
 

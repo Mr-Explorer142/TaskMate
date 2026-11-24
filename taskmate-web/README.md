@@ -1,8 +1,8 @@
 # TaskMate Web
 
 The React frontend for TaskMate — a task marketplace where people find teammates
-for real work. Day 1 covers authentication and public/private profiles; task
-features arrive on Day 2.
+for real work. Day 1 covers authentication and public/private profiles; Day 2
+adds task browsing, creation, editing, and owner management.
 
 ## Stack
 
@@ -77,6 +77,21 @@ The seeded database also contains other members to visit via
   live detection preview. Invalid and duplicate URLs surface inline errors.
 - **Public profile** — read-only view at `/users/:id`, showing skills, links,
   rating, and a CV download only when one exists. Email is never exposed.
+- **Tasks** — browse the task grid with debounced search, type/skill/reward
+  filters, an open-slots switch, and sorting. Every filter, sort, and page is
+  reflected in the URL, so refreshes and back/forward navigation keep state.
+  Loading skeletons, empty states, and retryable errors are included.
+- **Task detail** — badges, full description, skills, reward, deadline, team
+  slot progress, and the uploader's card with rating. Owners can edit, cancel,
+  or delete a task (with validation errors surfaced in toasts); non-owners see
+  a disabled apply button until applications open on Day 3.
+- **Task forms** — create and edit share a React Hook Form + Zod form mirroring
+  the API rules: paid vs points reward rules, description counter, date
+  minimums, up to 15 skills, unsaved-changes warning, field-level 422 errors,
+  and type locking once a task has applications.
+- **My Tasks** — status tabs (all, open, full, in progress, completed,
+  cancelled) backed by the URL, applicant counts, and per-card view/edit/cancel
+  actions.
 
 ## Routes
 
@@ -86,7 +101,12 @@ The seeded database also contains other members to visit via
 | `/register` | Public | Register |
 | `/verify-email` | Public | Email verification |
 | `/auth/callback` | Public | OAuth callback |
-| `/` | Protected | Home |
+| `/` | Protected | Redirects to `/tasks` |
+| `/tasks` | Protected | Browse tasks |
+| `/tasks/new` | Protected | Post a task |
+| `/tasks/:id` | Protected | Task detail |
+| `/tasks/:id/edit` | Protected | Edit an owned task |
+| `/my-tasks` | Protected | Tasks you posted |
 | `/profile` | Protected | Own profile |
 | `/users/:id` | Protected | Public profile |
 
@@ -107,15 +127,21 @@ src/
   components/
     layout/       app shell and auth shell
     profile/      profile cards, link editor, public profile view
+    tasks/        task cards, filters, form, badges, pagination
     ui/           shadcn/ui components
-  lib/            utilities and platform detection
+  hooks/          useDebounce
+  lib/            utilities, formatting, and platform detection
   pages/          route pages
-  stores/         Zustand auth store
+  stores/         Zustand auth and task stores
   types/          shared TypeScript types
 ```
 
 ## Notes
 
+- Task list filters, sorting, and pagination live in the URL query string
+  (`search`, `type`, `skill`, `min_reward`, `max_reward`, `has_open_slots`,
+  `sort`, `page`); My Tasks uses `status`. The task store aborts stale list
+  requests so rapid filter changes cannot overwrite newer results.
 - CVs live on the API's private disk and are fetched as authenticated blobs; no
   direct file URL is exposed.
 - The app supports light and dark themes, following the saved preference or the

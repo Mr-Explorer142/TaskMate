@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'reward',
     'status',
     'deadline',
+    'skills',
 ])]
 class Task extends Model
 {
@@ -38,6 +39,7 @@ class Task extends Model
             'status' => TaskStatus::class,
             'deadline' => 'date',
             'reward' => 'decimal:2',
+            'skills' => 'array',
         ];
     }
 

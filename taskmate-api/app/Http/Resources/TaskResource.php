@@ -14,9 +14,11 @@ class TaskResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $viewerId = $request->user()?->id;
+        $isOwner = $viewerId !== null && $viewerId === $this->uploader_id;
+
         return [
             'id' => $this->id,
-            'uploader_id' => $this->uploader_id,
             'title' => $this->title,
             'description' => $this->description,
             'team_size' => $this->team_size,
@@ -24,12 +26,22 @@ class TaskResource extends JsonResource
             'reward' => $this->reward,
             'status' => $this->status->value,
             'deadline' => $this->deadline?->toDateString(),
+            'skills' => $this->skills ?? [],
+            'created_at' => $this->created_at?->toIso8601String(),
             'accepted_count' => $this->acceptedCount(),
             'open_slots' => $this->openSlots(),
             'is_full' => $this->isFull(),
-            'uploader' => $this->whenLoaded('uploader', fn () => new PublicUserResource($this->uploader)),
-            'created_at' => $this->created_at?->toIso8601String(),
-            'updated_at' => $this->updated_at?->toIso8601String(),
+            'applications_count' => $this->when($isOwner, fn () => (int) ($this->applications_count ?? 0)),
+            'uploader' => $this->whenLoaded('uploader', fn () => [
+                'id' => $this->uploader->id,
+                'name' => $this->uploader->name,
+                'avatar' => $this->uploader->avatar,
+                'average_rating' => $this->uploader->average_rating,
+            ]),
+            'is_owner' => $isOwner,
+            'my_application_status' => $this->relationLoaded('applications')
+                ? $this->applications->first()?->status?->value
+                : null,
         ];
     }
 }

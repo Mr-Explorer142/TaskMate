@@ -18,6 +18,16 @@ use Illuminate\Database\Seeder;
 class DatabaseSeeder extends Seeder
 {
     /**
+     * Skills available for seeded tasks.
+     *
+     * @var array<int, string>
+     */
+    private const TASK_SKILLS = [
+        'Laravel', 'React', 'PHP', 'MySQL', 'UI Design', 'Figma', 'Content Writing',
+        'SEO', 'Python', 'Data Entry', 'Video Editing', 'Translation',
+    ];
+
+    /**
      * Seed the application's database.
      */
     public function run(): void
@@ -100,6 +110,7 @@ class DatabaseSeeder extends Seeder
                 'type' => $type,
                 'reward' => $type === TaskType::Paid ? fake()->randomFloat(2, 50, 500) : 0,
                 'status' => $status,
+                'skills' => fake()->randomElements(self::TASK_SKILLS, fake()->numberBetween(2, 5)),
             ]);
 
             $candidates = $everyone

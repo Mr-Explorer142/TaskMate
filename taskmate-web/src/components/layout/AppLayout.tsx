@@ -1,7 +1,9 @@
 import { useState } from "react"
 import {
-  LayoutDashboard,
+  ClipboardList,
+  ListTodo,
   LogOut,
+  Plus,
   User as UserIcon,
 } from "lucide-react"
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom"
@@ -27,7 +29,8 @@ import { getInitials } from "@/lib/utils"
 import { useAuthStore } from "@/stores/useAuthStore"
 
 const navigation = [
-  { to: "/", label: "Home", icon: LayoutDashboard },
+  { to: "/tasks", label: "Tasks", icon: ListTodo },
+  { to: "/my-tasks", label: "My Tasks", icon: ClipboardList },
 ]
 
 export function AppLayout() {
@@ -64,7 +67,6 @@ export function AppLayout() {
               <NavLink
                 key={item.to}
                 to={item.to}
-                end={item.to === "/"}
                 className={({ isActive }) =>
                   [
                     "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors",
@@ -81,6 +83,14 @@ export function AppLayout() {
           </nav>
 
           <div className="flex items-center gap-1">
+            <Button asChild size="sm" className="mr-1">
+              <Link to="/tasks/new">
+                <Plus className="size-4" />
+                <span className="hidden sm:inline">Post a task</span>
+                <span className="sm:hidden">Post</span>
+              </Link>
+            </Button>
+
             <ThemeToggle />
 
             <DropdownMenu>
