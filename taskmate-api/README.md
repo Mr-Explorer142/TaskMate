@@ -69,6 +69,16 @@ GET    /api/v1/my/applications          # Bearer token required
 PATCH  /api/v1/applications/{application}/accept  # Bearer token required (owner only)
 PATCH  /api/v1/applications/{application}/reject  # Bearer token required (owner only)
 PATCH  /api/v1/applications/{application}/leave   # Bearer token required
+
+GET    /api/v1/points                   # Bearer token required
+GET    /api/v1/points/transactions      # Bearer token required
+
+POST   /api/v1/conversations            # Bearer token required
+GET    /api/v1/conversations            # Bearer token required
+GET    /api/v1/conversations/unread-count  # Bearer token required
+GET    /api/v1/conversations/{conversation}/messages  # Bearer token required
+POST   /api/v1/conversations/{conversation}/messages  # Bearer token required
+POST   /api/v1/conversations/{conversation}/read      # Bearer token required
 ```
 
 ## Tasks
@@ -141,6 +151,96 @@ Business rules:
   skills, rating, `has_cv`, links); owner task lists also include
   owner-only `pending_count`, plus each task exposes `my_application_id` and
   `my_application_status` to the current user.
+
+## Points
+
+Every new account - email/password or social - receives a starter bonus of
+`100` points (`config/points.php`). Each balance change is written to the
+`point_transactions` ledger:
+
+- `bonus` - starter points on signup.
+- `escrow` - points held when a points task starts.
+- `release` - escrow released to members as the project progresses.
+- `refund` - remaining escrow returned to the uploader.
+
+```http
+GET /api/v1/points
+```
+
+```json
+{
+  "data": { "balance": 250, "escrowed": 200 },
+  "message": "Points balance."
+}
+```
+
+```http
+GET /api/v1/points/transactions?page=1
+```
+
+Paginated 20 per page, newest first. Each row contains `id`, signed `amount`,
+`type` (`bonus`, `escrow`, `release`, `refund`), `note`, optional `task`
+(`id`, `title`), and `created_at`.
+
+Business rules:
+
+- Starting a points task escrows `reward x accepted members` from the
+  uploader's balance. The task stores the held amount in `tasks.escrow_amount`.
+- Starting with too few points returns `422`:
+  `Insufficient points: you need X and have Y` under the `points` error key.
+- The ledger is the source of truth: `users.points_balance` always equals the
+  sum of that user's transaction amounts.
+- Escrow is reduced by `release` and cleared by `refund`.
+
+## Direct messages
+
+Conversations are scoped to a task and are one per task/user pair. The
+`conversations.task_id` column is nullable in the schema for legacy rows, but
+the application and factory always set it.
+
+```http
+POST /api/v1/conversations
+Content-Type: application/json
+
+{ "task_id": 4, "user_id": 9 }
+```
+
+Returns `201` when a conversation is created and `200` when it already exists.
+Only the task uploader may start a conversation with an applicant, and only an
+applicant may start one with the uploader (`403` otherwise).
+
+```http
+GET /api/v1/conversations?page=1
+GET /api/v1/conversations/unread-count
+```
+
+The list is ordered by the most recent message and includes `other_user`,
+`task`, `last_message`, and the viewer's `unread_count`. The unread endpoint
+returns `{ "data": { "count": 3 } }`.
+
+```http
+GET /api/v1/conversations/{conversation}/messages
+GET /api/v1/conversations/{conversation}/messages?before_id=120
+GET /api/v1/conversations/{conversation}/messages?after_id=150
+```
+
+Without a cursor the newest 30 messages are returned oldest first. `before_id`
+loads 30 older messages for pagination; `after_id` returns up to 100 newer
+messages for polling.
+
+```http
+POST /api/v1/conversations/{conversation}/messages
+Content-Type: application/json
+
+{ "body": "Hi! I'd like to discuss the interview details." }
+
+POST /api/v1/conversations/{conversation}/read
+```
+
+Messages are plain text up to 2000 characters. Sending is rate limited to 60
+requests per minute. `read` marks every unread message from the other
+participant and returns `{ "data": { "updated": 3 } }`. The API is polling
+based; no websockets are required.
 
 ## Setup
 

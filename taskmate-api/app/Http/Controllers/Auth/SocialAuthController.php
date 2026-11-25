@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\SocialAccount;
 use App\Models\User;
+use App\Services\PointsService;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Contracts\User as SocialiteUser;
 use Laravel\Socialite\Facades\Socialite;
@@ -94,6 +95,12 @@ class SocialAuthController extends Controller
             ]);
 
             $user->forceFill(['email_verified_at' => now()])->save();
+
+            app(PointsService::class)->grantBonus(
+                $user,
+                (int) config('points.signup_bonus'),
+                'Welcome bonus',
+            );
         } elseif (blank($user->avatar) && filled($socialiteUser->getAvatar())) {
             $user->update(['avatar' => $socialiteUser->getAvatar()]);
         }

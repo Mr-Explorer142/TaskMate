@@ -1,8 +1,9 @@
 # TaskMate Web
 
-The React frontend for TaskMate — a task marketplace where people find teammates
+The React frontend for TaskMate - a task marketplace where people find teammates
 for real work. Day 1 covers authentication and public/private profiles; Day 2
-adds task browsing, creation, editing, and owner management.
+adds task browsing, creation, editing, and owner management. Day 5 adds
+task-scoped direct messages and the points wallet.
 
 ## Stack
 
@@ -103,6 +104,25 @@ The seeded database also contains other members to visit via
 - **My Applications** - track every application at `/my-applications` with
   all/pending/accepted/rejected tabs, task type, reward, status, applied date,
   and withdrawal of pending applications.
+- **Direct messages** - task-scoped conversations at `/messages` and
+  `/messages/:conversationId`. Desktop shows the conversation list beside the
+  thread; mobile shows the list, then the thread full screen with a back
+  button. Items show the other user, task, last message, relative time, and an
+  unread badge. Threads load older history with `before_id`, poll for new
+  messages with `after_id` every 4 seconds, mark messages read on open and on
+  arrival, and keep a plain-text, `pre-wrap` body. Messages are sent with Enter
+  (Shift+Enter for a newline), a 2000-character counter, and optimistic append
+  with rollback plus an error toast on failure. Entry points: "Message
+  uploader" on a task, "Message" on each applicant card, and the navbar
+  Messages link with an unread badge.
+- **Points** - a navbar `PointsBadge` and a `/points` page with balance, in
+  escrow, and a paginated transaction list. Bonus, escrow, release, and refund
+  rows use distinct badges; signed amounts are colored by direction, with task
+  links and dates. New users see "You received 100 starter points" after
+  registering. Points task forms and details show the escrow hint, and the
+  start dialog shows required versus available points, blocks a start when the
+  balance is too low, links to `/points`, and refreshes the balance after a
+  successful start.
 
 ## Routes
 
@@ -120,6 +140,9 @@ The seeded database also contains other members to visit via
 | `/tasks/:id/applicants` | Protected (owner) | Review applicants |
 | `/my-tasks` | Protected | Tasks you posted |
 | `/my-applications` | Protected | Applications you sent |
+| `/messages` | Protected | Conversation list |
+| `/messages/:conversationId` | Protected | Conversation thread |
+| `/points` | Protected | Points wallet and transactions |
 | `/profile` | Protected | Own profile |
 | `/users/:id` | Protected | Public profile |
 
@@ -136,17 +159,19 @@ npm run lint     # oxlint
 
 ```
 src/
-  api/            axios client and endpoint wrappers
+  api/            axios client and endpoint wrappers (auth, tasks, messages, points)
   components/
     applications/ application dialog, applicant card, row, status badge
+    chat/         conversation list/item, thread, bubbles, input, message button
     layout/       app shell and auth shell
+    points/       balance badge and transaction row
     profile/      profile cards, link editor, public profile view
     tasks/        task cards, filters, form, badges, pagination
     ui/           shadcn/ui components
-  hooks/          useDebounce
+  hooks/          useDebounce, usePolling
   lib/            utilities, formatting, and platform detection
-  pages/          route pages
-  stores/         Zustand auth, task, and application stores
+  pages/          route pages (including Messages and Points)
+  stores/         Zustand auth, task, application, chat, and points stores
   types/          shared TypeScript types
 ```
 
@@ -161,5 +186,12 @@ src/
   direct file URL is exposed.
 - The app supports light and dark themes, following the saved preference or the
   operating system setting.
+- Messaging is polling based. `usePolling` pauses when the tab is hidden, never
+  overlaps requests, and cleans up on unmount: the active thread polls every 4
+  seconds, the conversation list every 10 seconds, and the navbar unread badge
+  every 15 seconds. Message bodies render as plain text with `white-space:
+  pre-wrap`; HTML is never injected.
+- The points store also syncs `points_balance` back into the persisted auth
+  user so the navbar and register flow stay current.
 - The Sanctum personal access token is stored under the `taskmate-auth` key in
   `localStorage` and sent as `Authorization: Bearer <token>` by the Axios client.

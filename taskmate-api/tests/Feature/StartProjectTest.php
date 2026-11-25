@@ -8,7 +8,7 @@ use App\Models\User;
 
 it('lets the owner start an open task and rejects pending applications', function () {
     $owner = authAs();
-    $task = Task::factory()->open()->create([
+    $task = Task::factory()->paid()->open()->create([
         'uploader_id' => $owner->id,
         'team_size' => 2,
     ]);
@@ -32,7 +32,7 @@ it('lets the owner start an open task and rejects pending applications', functio
 
 it('allows starting a full task', function () {
     $owner = authAs();
-    $task = Task::factory()->full()->create([
+    $task = Task::factory()->paid()->full()->create([
         'uploader_id' => $owner->id,
         'team_size' => 1,
     ]);
@@ -44,7 +44,7 @@ it('allows starting a full task', function () {
 });
 
 it('forbids non-owners from starting a task', function () {
-    $task = Task::factory()->open()->create(['team_size' => 2]);
+    $task = Task::factory()->paid()->open()->create(['team_size' => 2]);
     Application::factory()->accepted()->create(['task_id' => $task->id]);
 
     authAs(User::factory()->create());
@@ -56,7 +56,7 @@ it('forbids non-owners from starting a task', function () {
 
 it('requires at least one accepted member before starting', function () {
     $owner = authAs();
-    $task = Task::factory()->open()->create([
+    $task = Task::factory()->paid()->open()->create([
         'uploader_id' => $owner->id,
         'team_size' => 3,
     ]);
@@ -125,7 +125,7 @@ it('blocks apply, accept, leave and edit after the project starts', function () 
 
 it('exposes can_start to the owner only when a member is accepted', function () {
     $owner = authAs();
-    $emptyTask = Task::factory()->open()->create([
+    $emptyTask = Task::factory()->paid()->open()->create([
         'uploader_id' => $owner->id,
         'team_size' => 2,
     ]);
@@ -134,7 +134,7 @@ it('exposes can_start to the owner only when a member is accepted', function () 
         ->assertOk()
         ->assertJsonPath('data.can_start', false);
 
-    $readyTask = Task::factory()->open()->create([
+    $readyTask = Task::factory()->paid()->open()->create([
         'uploader_id' => $owner->id,
         'team_size' => 2,
     ]);
@@ -152,7 +152,7 @@ it('exposes can_start to the owner only when a member is accepted', function () 
 });
 
 it('requires authentication to start a task', function () {
-    $task = Task::factory()->open()->create(['team_size' => 2]);
+    $task = Task::factory()->paid()->open()->create(['team_size' => 2]);
     Application::factory()->accepted()->create(['task_id' => $task->id]);
 
     $this->patchJson("/api/v1/tasks/{$task->id}/start")->assertUnauthorized();

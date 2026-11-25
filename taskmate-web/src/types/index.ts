@@ -195,6 +195,67 @@ export interface Team {
   meta: TeamMeta
 }
 
+export interface ConversationOtherUser {
+  id: number
+  name: string
+  avatar: string | null
+}
+
+export interface ConversationTask {
+  id: number
+  title: string
+}
+
+export interface ConversationLastMessage {
+  id: number
+  sender_id: number
+  body: string
+  created_at: string | null
+}
+
+export interface Conversation {
+  id: number
+  task_id: number
+  task: ConversationTask | null
+  other_user: ConversationOtherUser | null
+  last_message: ConversationLastMessage | null
+  unread_count: number
+  created_at: string | null
+  updated_at: string | null
+}
+
+export interface Message {
+  id: number
+  conversation_id: number
+  sender_id: number
+  body: string
+  created_at: string | null
+  read_at: string | null
+  /** Local-only flag for optimistic messages. */
+  pending?: boolean
+}
+
+export type PointTransactionType = "bonus" | "escrow" | "release" | "refund"
+
+export interface PointTransactionTask {
+  id: number
+  title: string
+}
+
+export interface PointTransaction {
+  id: number
+  amount: number
+  type: PointTransactionType
+  note: string | null
+  task: PointTransactionTask | null
+  created_at: string | null
+}
+
+export interface PointsSummary {
+  balance: number
+  escrowed: number
+}
+
 export interface ApiEnvelope<T> {
   data: T
   message: string

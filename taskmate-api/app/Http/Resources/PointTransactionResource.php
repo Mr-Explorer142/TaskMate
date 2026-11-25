@@ -16,12 +16,14 @@ class PointTransactionResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'user_id' => $this->user_id,
-            'task_id' => $this->task_id,
             'amount' => $this->amount,
             'type' => $this->type->value,
+            'note' => $this->note,
+            'task' => $this->whenLoaded('task', fn () => $this->task === null ? null : [
+                'id' => $this->task->id,
+                'title' => $this->task->title,
+            ]),
             'created_at' => $this->created_at?->toIso8601String(),
-            'updated_at' => $this->updated_at?->toIso8601String(),
         ];
     }
 }

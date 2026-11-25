@@ -19,6 +19,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useApplicationStore } from "@/stores/useApplicationStore"
+import { usePointsStore } from "@/stores/usePointsStore"
 import type { ApplicationStatus, Task, Team } from "@/types"
 
 interface ApplicantTab {
@@ -254,6 +255,9 @@ export function TaskApplicantsPage() {
       const updated = await startTask(activeTaskId)
       setTask(updated)
       toast.success("Project started.")
+      if (updated.type === "points") {
+        void usePointsStore.getState().fetchSummary()
+      }
       await fetchApplications(activeTaskId, filters)
       await loadTeam()
     } catch (caught) {
@@ -429,6 +433,7 @@ export function TaskApplicantsPage() {
               <ApplicantCard
                 key={application.id}
                 application={application}
+                taskId={task.id}
                 teamFull={teamFull}
                 locked={isInProgress}
                 busy={busyId !== null}

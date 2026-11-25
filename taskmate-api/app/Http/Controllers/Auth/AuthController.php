@@ -9,6 +9,7 @@ use App\Http\Requests\Auth\VerifyEmailRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Notifications\VerifyEmailNotification;
+use App\Services\PointsService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -29,6 +30,11 @@ class AuthController extends Controller
     public function register(RegisterRequest $request): JsonResponse
     {
         $user = User::create($request->validated());
+        app(PointsService::class)->grantBonus(
+            $user,
+            (int) config('points.signup_bonus'),
+            'Welcome bonus',
+        );
         $this->sendVerificationCode($user);
         $user->load('profileLinks');
 

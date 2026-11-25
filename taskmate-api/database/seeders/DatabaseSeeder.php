@@ -4,15 +4,16 @@ namespace Database\Seeders;
 
 use App\Enums\ApplicationStatus;
 use App\Enums\LinkPlatform;
-use App\Enums\PointTransactionType;
 use App\Enums\TaskStatus;
 use App\Enums\TaskType;
 use App\Models\Application;
-use App\Models\PointTransaction;
+use App\Models\Conversation;
+use App\Models\Message;
 use App\Models\ProfileLink;
 use App\Models\Review;
 use App\Models\Task;
 use App\Models\User;
+use App\Services\PointsService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Seeder;
@@ -34,6 +35,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $points = app(PointsService::class);
+        $signupBonus = (int) config('points.signup_bonus');
+
         $demo = User::factory()->create([
             'name' => 'Demo User',
             'email' => 'demo@taskmate.test',
@@ -41,8 +45,9 @@ class DatabaseSeeder extends Seeder
             'country' => 'BD',
             'bio' => 'Full-stack developer and designer who loves small, focused teams.',
             'skills' => ['Laravel', 'React', 'UI Design'],
-            'points_balance' => 250,
         ]);
+
+        $points->grantBonus($demo, $signupBonus, 'Welcome bonus');
 
         $demo->profileLinks()->createMany([
             [
@@ -68,6 +73,8 @@ class DatabaseSeeder extends Seeder
         $users = User::factory(10)->create();
 
         foreach ($users as $user) {
+            $points->grantBonus($user, $signupBonus, 'Welcome bonus');
+
             $linkCount = random_int(0, 4);
 
             for ($i = 0; $i < $linkCount; $i++) {
@@ -110,7 +117,7 @@ class DatabaseSeeder extends Seeder
                 'uploader_id' => $index % 5 === 0 ? $demo->id : $users->random()->id,
                 'team_size' => random_int(2, 5),
                 'type' => $type,
-                'reward' => $type === TaskType::Paid ? fake()->randomFloat(2, 50, 500) : 0,
+                'reward' => $type === TaskType::Paid ? fake()->randomFloat(2, 50, 500) : random_int(20, 60),
                 'status' => $status,
                 'started_at' => in_array($status, [TaskStatus::InProgress, TaskStatus::Completed], true)
                     ? now()->subDays(random_int(1, 20))
@@ -159,22 +166,15 @@ class DatabaseSeeder extends Seeder
                 ]);
             }
 
-            if ($type === TaskType::Points) {
-                PointTransaction::factory()->create([
-                    'user_id' => $task->uploader_id,
-                    'task_id' => $task->id,
-                    'amount' => -50 * $task->team_size,
-                    'type' => PointTransactionType::Escrow,
-                ]);
+            if ($type === TaskType::Points && in_array($status, [TaskStatus::InProgress, TaskStatus::Completed], true)) {
+                $required = (int) $task->reward * $accepted->count();
 
-                if (in_array($status, [TaskStatus::Full, TaskStatus::InProgress, TaskStatus::Completed], true)) {
+                $this->ensureUploaderHasPoints($points, $task->uploader, $required);
+                $points->escrow($task->uploader, $task, $required);
+
+                if ($status === TaskStatus::Completed) {
                     foreach ($accepted as $user) {
-                        PointTransaction::factory()->create([
-                            'user_id' => $user->id,
-                            'task_id' => $task->id,
-                            'amount' => 50,
-                            'type' => PointTransactionType::Release,
-                        ]);
+                        $points->release($task, $user, (int) $task->reward);
                     }
                 }
             }
@@ -199,6 +199,7 @@ class DatabaseSeeder extends Seeder
         $this->seedDemoApplications($demo, $users);
         $this->normalizeTeamStatuses();
         $this->ensureLeftAndStartedScenarios($demo, $users);
+        $this->seedConversations($demo);
     }
 
     /**
@@ -345,6 +346,11 @@ class DatabaseSeeder extends Seeder
 
         if ($leftUser === null) {
             $leftUser = User::factory()->create();
+            app(PointsService::class)->grantBonus(
+                $leftUser,
+                (int) config('points.signup_bonus'),
+                'Welcome bonus',
+            );
             $users->push($leftUser);
         }
 
@@ -376,5 +382,96 @@ class DatabaseSeeder extends Seeder
                 'task_id' => $startedTask->id,
                 'user_id' => $user->id,
             ]));
+
+        if ($startedTask->type === TaskType::Points) {
+            $points = app(PointsService::class);
+            $required = (int) $startedTask->reward * $startedTask->acceptedApplications()->count();
+
+            $this->ensureUploaderHasPoints($points, $startedTask->uploader, $required);
+            $points->escrow($startedTask->uploader, $startedTask, $required);
+        }
+    }
+
+    /**
+     * Top up an uploader so a seeded escrow can be funded.
+     */
+    private function ensureUploaderHasPoints(PointsService $points, User $uploader, int $required): void
+    {
+        $uploader->refresh();
+
+        if ($uploader->points_balance < $required) {
+            $points->grantBonus(
+                $uploader,
+                $required - $uploader->points_balance + 100,
+                'Seed escrow top-up',
+            );
+        }
+    }
+
+    /**
+     * Seed a few conversations between the demo user and other members.
+     */
+    private function seedConversations(User $demo): void
+    {
+        $partners = User::query()
+            ->whereKeyNot($demo->id)
+            ->inRandomOrder()
+            ->take(3)
+            ->get();
+
+        $tasks = Task::query()
+            ->where(function (Builder $query) use ($demo): void {
+                $query->where('uploader_id', $demo->id)
+                    ->orWhereHas('applications', fn (Builder $query) => $query
+                        ->where('user_id', $demo->id));
+            })
+            ->get();
+
+        if ($partners->isEmpty()) {
+            return;
+        }
+
+        if ($tasks->isEmpty()) {
+            $tasks = Task::factory(2)->open()->create(['uploader_id' => $demo->id])->toBase();
+        }
+
+        foreach ($partners as $partner) {
+            $task = $tasks->random();
+
+            [$userOneId, $userTwoId] = $demo->id < $partner->id
+                ? [$demo->id, $partner->id]
+                : [$partner->id, $demo->id];
+
+            $conversation = Conversation::query()->create([
+                'task_id' => $task->id,
+                'user_one_id' => $userOneId,
+                'user_two_id' => $userTwoId,
+            ]);
+
+            $messageCount = random_int(5, 15);
+            $startedAt = now()->subDays(random_int(1, 7))->subMinutes($messageCount * 3);
+            $lastPartnerIndex = $messageCount % 2 === 1 ? $messageCount : $messageCount - 1;
+
+            for ($index = 1; $index <= $messageCount; $index++) {
+                $sender = $index % 2 === 1 ? $partner : $demo;
+                $sentAt = $startedAt->copy()->addMinutes($index * 3);
+
+                Message::factory()->create([
+                    'conversation_id' => $conversation->id,
+                    'sender_id' => $sender->id,
+                    'body' => fake()->paragraph(),
+                    'read_at' => $sender->id === $demo->id || $index !== $lastPartnerIndex
+                        ? $sentAt->copy()
+                        : null,
+                    'created_at' => $sentAt,
+                    'updated_at' => $sentAt,
+                ]);
+            }
+
+            $conversation->forceFill([
+                'created_at' => $startedAt,
+                'updated_at' => $startedAt->copy()->addMinutes($messageCount * 3),
+            ])->save();
+        }
     }
 }

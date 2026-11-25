@@ -46,6 +46,8 @@ it('creates a user from a social login and redirects with a token', function () 
     expect($user->name)->toBe('Jane Doe')
         ->and($user->avatar)->toBe('https://example.com/avatar.png')
         ->and($user->email_verified_at)->not->toBeNull()
+        ->and($user->points_balance)->toBe((int) config('points.signup_bonus'))
+        ->and($user->pointTransactions()->count())->toBe(1)
         ->and($user->socialAccounts)->toHaveCount(1);
 
     $this->assertDatabaseHas('social_accounts', [
@@ -67,6 +69,8 @@ it('links a social login to an existing user with the same email', function () {
 
     expect(User::query()->count())->toBe(1)
         ->and($user->fresh()->country)->toBe('DE')
+        ->and($user->fresh()->points_balance)->toBe(0)
+        ->and($user->pointTransactions()->count())->toBe(0)
         ->and($user->socialAccounts()->count())->toBe(1);
 });
 
