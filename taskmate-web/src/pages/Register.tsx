@@ -1,3 +1,4 @@
+import { usePageTitle } from "@/hooks/usePageTitle"
 import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2 } from "lucide-react"
@@ -21,6 +22,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { formatPoints } from "@/lib/format"
 import { useAuthStore } from "@/stores/useAuthStore"
 
 const registerSchema = z
@@ -41,6 +43,7 @@ type RegisterValues = z.infer<typeof registerSchema>
 const fieldNames = ["name", "email", "country", "password", "password_confirmation"] as const
 
 export function RegisterPage() {
+  usePageTitle("Sign up")
   const setAuth = useAuthStore((state) => state.setAuth)
   const navigate = useNavigate()
   const [submitting, setSubmitting] = useState(false)
@@ -70,7 +73,7 @@ export function RegisterPage() {
       setAuth(result.user, result.token)
       if (result.user.points_balance > 0) {
         toast.success(
-          `You received ${result.user.points_balance} starter points.`
+          `You received ${formatPoints(result.user.points_balance)} starter points.`
         )
       } else {
         toast.success("Account created. Welcome to TaskMate!")
@@ -146,8 +149,9 @@ export function RegisterPage() {
             name="country"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Country</FormLabel>
+                <FormLabel htmlFor="country">Country</FormLabel>
                 <CountrySelect
+                  id="country"
                   value={field.value}
                   onChange={field.onChange}
                   disabled={submitting}

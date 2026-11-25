@@ -1,3 +1,4 @@
+import { usePageTitle } from "@/hooks/usePageTitle"
 import { useCallback, useEffect, useState } from "react"
 import axios from "axios"
 import { ArrowLeft, CalendarDays, CheckCircle2, Info, Pencil, PlayCircle, Star, Trash2, Users, XCircle } from "lucide-react"
@@ -75,6 +76,7 @@ function closedLabel(status: TaskStatus): string {
 }
 
 export function TaskDetailPage() {
+  usePageTitle("Task details")
   const { id } = useParams()
   const navigate = useNavigate()
   const cancelTask = useTaskStore((state) => state.cancelTask)
@@ -226,7 +228,7 @@ export function TaskDetailPage() {
         my_application_status: application.status,
       })
       setApplyOpen(false)
-      toast.success("Application submitted.")
+      toast.success("Application sent.")
     } catch (caught) {
       toast.error(getApiErrorMessage(caught))
     } finally {
@@ -429,12 +431,12 @@ export function TaskDetailPage() {
               <AlertDialogTrigger asChild>
                 <Button variant="outline" size="sm" disabled={busy}>
                   <XCircle className="size-4" />
-                  Cancel project
+                  Cancel task
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Cancel this project?</AlertDialogTitle>
+                  <AlertDialogTitle>Cancel this task?</AlertDialogTitle>
                   <AlertDialogDescription>
                     {isInProgress
                       ? "Escrowed points will be refunded to you and members get nothing. This cannot be undone."
@@ -448,7 +450,7 @@ export function TaskDetailPage() {
                       void handleCancel()
                     }}
                   >
-                    Cancel project
+                    Cancel task
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -549,7 +551,7 @@ export function TaskDetailPage() {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel disabled={applicationBusy}>
-                  Keep it
+                  Keep application
                 </AlertDialogCancel>
                 <AlertDialogAction
                   variant="destructive"

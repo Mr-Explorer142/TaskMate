@@ -1,3 +1,4 @@
+import { usePageTitle } from "@/hooks/usePageTitle"
 import { useEffect, useMemo, useState } from "react"
 import { Plus, SearchX, Star, Users, XCircle } from "lucide-react"
 import { Link, useSearchParams } from "react-router-dom"
@@ -44,6 +45,7 @@ function pageParam(value: string | null): number {
 }
 
 export function MyTasksPage() {
+  usePageTitle("My tasks")
   const [searchParams, setSearchParams] = useSearchParams()
   const tasks = useTaskStore((state) => state.tasks)
   const meta = useTaskStore((state) => state.meta)

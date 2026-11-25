@@ -1,3 +1,4 @@
+import { usePageTitle } from "@/hooks/usePageTitle"
 import { useCallback, useEffect, useState } from "react"
 import axios from "axios"
 import { ArrowLeft } from "lucide-react"
@@ -35,6 +36,7 @@ function UserProfileSkeleton() {
 }
 
 export function UserProfilePage() {
+  usePageTitle("User profile")
   const { id } = useParams<{ id: string }>()
   const [user, setUser] = useState<PublicUser | null>(null)
   const [loading, setLoading] = useState(true)

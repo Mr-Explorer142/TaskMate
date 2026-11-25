@@ -99,7 +99,7 @@ export function ApplicationRow({
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel disabled={busy}>Keep it</AlertDialogCancel>
+                <AlertDialogCancel disabled={busy}>Keep application</AlertDialogCancel>
                 <AlertDialogAction
                   variant="destructive"
                   disabled={busy}

@@ -13,6 +13,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
+import { formatPoints } from "@/lib/format"
 import type { Task } from "@/types"
 
 export function CompleteProjectDialog({
@@ -50,7 +51,7 @@ export function CompleteProjectDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {confirmingCancel ? "Cancel this project?" : "Complete this project?"}
+            {confirmingCancel ? "Cancel this task?" : "Complete this task?"}
           </AlertDialogTitle>
           <AlertDialogDescription>
             {confirmingCancel
@@ -77,9 +78,9 @@ export function CompleteProjectDialog({
             )
           ) : task.type === "points" ? (
             <>
-              {reward.toLocaleString("en-US")} points will be released to each of{" "}
+              {formatPoints(reward)} points will be released to each of{" "}
               {task.accepted_count} member{task.accepted_count === 1 ? "" : "s"}{" "}
-              (total {total.toLocaleString("en-US")}). Any leftover escrow is
+              (total {formatPoints(total)}). Any leftover escrow is
               refunded to you.
             </>
           ) : (
@@ -107,12 +108,12 @@ export function CompleteProjectDialog({
                   onCancel()
                 }}
               >
-                Cancel project
+                Cancel task
               </AlertDialogAction>
             </>
           ) : (
             <>
-              <AlertDialogCancel disabled={busy}>Not yet</AlertDialogCancel>
+              <AlertDialogCancel disabled={busy}>Not now</AlertDialogCancel>
               <div className="flex flex-wrap justify-end gap-2">
                 <Button
                   type="button"
@@ -122,7 +123,7 @@ export function CompleteProjectDialog({
                   onClick={() => setConfirmingCancel(true)}
                 >
                   <XCircle className="size-4" />
-                  Cancel project
+                  Cancel task
                 </Button>
                 <AlertDialogAction
                   disabled={busy}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import {
   ClipboardList,
   FileCheck2,
@@ -15,6 +15,8 @@ import { logout } from "@/api/auth"
 import { CountryFlag } from "@/components/CountryFlag"
 import { Footer } from "@/components/layout/Footer"
 import { Logo } from "@/components/Logo"
+import { NotificationBell } from "@/components/notifications/NotificationBell"
+import { PageLoadingSkeleton } from "@/components/ProtectedRoute"
 import { PointsBadge } from "@/components/points/PointsBadge"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { VerifyEmailBanner } from "@/components/VerifyEmailBanner"
@@ -32,6 +34,7 @@ import { usePolling } from "@/hooks/usePolling"
 import { getInitials } from "@/lib/utils"
 import { useAuthStore } from "@/stores/useAuthStore"
 import { useChatStore } from "@/stores/useChatStore"
+import { useNotificationStore } from "@/stores/useNotificationStore"
 import { usePointsStore } from "@/stores/usePointsStore"
 
 const navigation = [
@@ -118,6 +121,7 @@ export function AppLayout() {
   const unreadCount = useChatStore((state) => state.unreadCount)
   const fetchUnreadCount = useChatStore((state) => state.fetchUnreadCount)
   const resetChat = useChatStore((state) => state.reset)
+  const resetNotifications = useNotificationStore((state) => state.reset)
   const resetPoints = usePointsStore((state) => state.reset)
   const navigate = useNavigate()
   const [loggingOut, setLoggingOut] = useState(false)
@@ -138,6 +142,7 @@ export function AppLayout() {
     } finally {
       clearAuth()
       resetChat()
+      resetNotifications()
       resetPoints()
       setLoggingOut(false)
       toast.success("You have been logged out.")
@@ -165,6 +170,8 @@ export function AppLayout() {
               </Button>
 
               <PointsBadge />
+
+              <NotificationBell />
 
               <ThemeToggle />
 
@@ -240,7 +247,9 @@ export function AppLayout() {
       <VerifyEmailBanner />
 
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:py-10">
-        <Outlet />
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <Outlet />
+        </Suspense>
       </main>
 
       <Footer />

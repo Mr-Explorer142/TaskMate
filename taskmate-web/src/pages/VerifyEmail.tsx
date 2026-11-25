@@ -1,3 +1,4 @@
+import { usePageTitle } from "@/hooks/usePageTitle"
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { FormEvent } from "react"
 import { Loader2, MailCheck } from "lucide-react"
@@ -13,6 +14,7 @@ import { Label } from "@/components/ui/label"
 import { useAuthStore } from "@/stores/useAuthStore"
 
 export function VerifyEmailPage() {
+  usePageTitle("Verify email")
   const [searchParams] = useSearchParams()
   const user = useAuthStore((state) => state.user)
   const setUser = useAuthStore((state) => state.setUser)

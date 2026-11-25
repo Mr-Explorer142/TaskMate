@@ -1,7 +1,10 @@
+import { usePageTitle } from "@/hooks/usePageTitle"
 import { ExternalLink, Star } from "lucide-react"
 import { Link } from "react-router-dom"
 
+import { me } from "@/api/auth"
 import { CountryFlag } from "@/components/CountryFlag"
+import { ErrorState } from "@/components/PageStates"
 import { PageLoadingSkeleton } from "@/components/ProtectedRoute"
 import { BasicInfoCard } from "@/components/profile/BasicInfoCard"
 import { CvCard } from "@/components/profile/CvCard"
@@ -14,10 +17,38 @@ import { getInitials } from "@/lib/utils"
 import { useAuthStore } from "@/stores/useAuthStore"
 
 export function ProfilePage() {
+  usePageTitle("Profile")
   const user = useAuthStore((state) => state.user)
+  const token = useAuthStore((state) => state.token)
+  const isHydrating = useAuthStore((state) => state.isHydrating)
+  const setUser = useAuthStore((state) => state.setUser)
+  const setHydrating = useAuthStore((state) => state.setHydrating)
+  const clearAuth = useAuthStore((state) => state.clearAuth)
+
+  async function retry() {
+    setHydrating(true)
+
+    try {
+      setUser(await me())
+    } catch {
+      clearAuth()
+    } finally {
+      setHydrating(false)
+    }
+  }
+
+  if (isHydrating) {
+    return <PageLoadingSkeleton />
+  }
 
   if (!user) {
-    return <PageLoadingSkeleton />
+    return (
+      <ErrorState
+        title="Could not load your profile"
+        message="We could not refresh your account details. Please try again."
+        onRetry={token ? () => void retry() : undefined}
+      />
+    )
   }
 
   return (

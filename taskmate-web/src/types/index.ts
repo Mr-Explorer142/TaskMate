@@ -318,3 +318,42 @@ export interface ApiErrorBody {
   message: string
   errors?: Record<string, string[]>
 }
+
+export type NotificationType =
+  | "application_received"
+  | "application_accepted"
+  | "application_rejected"
+  | "member_left"
+  | "project_started"
+  | "project_completed"
+  | "project_cancelled"
+  | "review_received"
+
+export interface AppNotificationData {
+  task_id?: number
+  application_id?: number
+  user_id?: number
+}
+
+export interface AppNotification {
+  id: string
+  type: NotificationType
+  title: string | null
+  body: string | null
+  data: AppNotificationData
+  read_at: string | null
+  created_at: string | null
+}
+
+export interface NotificationUnreadCount {
+  count: number
+}
+
+export interface MarkAllReadResult {
+  updated: number
+}
+
+export interface NotificationListFilters {
+  page?: number
+  unread?: boolean
+}

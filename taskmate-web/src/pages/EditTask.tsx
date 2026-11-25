@@ -1,3 +1,4 @@
+import { usePageTitle } from "@/hooks/usePageTitle"
 import { useCallback, useEffect, useState } from "react"
 import axios from "axios"
 import { ArrowLeft } from "lucide-react"
@@ -24,6 +25,7 @@ function EditTaskSkeleton() {
 }
 
 export function EditTaskPage() {
+  usePageTitle("Edit task")
   const { id } = useParams()
   const navigate = useNavigate()
   const [task, setTask] = useState<Task | null>(null)

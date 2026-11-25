@@ -1,7 +1,7 @@
-import { format, parseISO } from "date-fns"
 import { Link } from "react-router-dom"
 
 import { Badge } from "@/components/ui/badge"
+import { formatDateTime, formatPoints } from "@/lib/format"
 import type { PointTransaction, PointTransactionType } from "@/types"
 
 const TYPE_STYLES: Record<
@@ -24,18 +24,6 @@ const TYPE_STYLES: Record<
     label: "Refund",
     className: "bg-status-completed-bg text-status-completed",
   },
-}
-
-function formatDate(value: string | null): string {
-  if (!value) {
-    return ""
-  }
-
-  try {
-    return format(parseISO(value), "MMM d, yyyy 'at' h:mm a")
-  } catch {
-    return ""
-  }
 }
 
 export function TransactionRow({
@@ -64,7 +52,7 @@ export function TransactionRow({
           <p className="text-sm text-muted-foreground">{transaction.note}</p>
         ) : null}
         <p className="text-xs text-muted-foreground">
-          {formatDate(transaction.created_at)}
+          {formatDateTime(transaction.created_at)}
         </p>
       </div>
 
@@ -75,7 +63,7 @@ export function TransactionRow({
         ].join(" ")}
       >
         {positive ? "+" : ""}
-        {transaction.amount.toLocaleString("en-US")}
+        {formatPoints(transaction.amount)}
       </span>
     </div>
   )

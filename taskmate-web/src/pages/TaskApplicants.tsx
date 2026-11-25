@@ -1,3 +1,4 @@
+import { usePageTitle } from "@/hooks/usePageTitle"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import axios from "axios"
 import { ArrowLeft, Inbox, Info, PlayCircle, SearchX } from "lucide-react"
@@ -57,6 +58,7 @@ function ApplicantsSkeleton() {
 }
 
 export function TaskApplicantsPage() {
+  usePageTitle("Applicants")
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()

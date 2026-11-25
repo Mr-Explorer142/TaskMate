@@ -1,5 +1,4 @@
 import { useState } from "react"
-import { format } from "date-fns"
 import { Download, FileText, Loader2, Star } from "lucide-react"
 import { toast } from "sonner"
 
@@ -19,7 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { EmptyState } from "@/components/PageStates"
-import { formatRatingLabel } from "@/lib/format"
+import { formatMonthYear, formatRatingLabel } from "@/lib/format"
 import { platformLabel } from "@/lib/platform"
 import { saveBlob } from "@/lib/download"
 import { getInitials } from "@/lib/utils"
@@ -67,7 +66,7 @@ export function ProfileView({ user }: { user: PublicUser }) {
                 <CountryFlag code={user.country} showName className="text-sm text-muted-foreground" />
               </div>
               <p className="text-sm text-muted-foreground">
-                Member since {format(new Date(user.created_at), "MMMM yyyy")}
+                Member since {formatMonthYear(user.created_at)}
               </p>
             </div>
 

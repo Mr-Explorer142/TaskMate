@@ -1,9 +1,11 @@
+import { usePageTitle } from "@/hooks/usePageTitle"
 import { Link } from "react-router-dom"
 
 import { Logo } from "@/components/Logo"
 import { Button } from "@/components/ui/button"
 
 export function NotFoundPage() {
+  usePageTitle("Page not found")
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4 text-center">
       <Link to="/" className="flex items-center">

@@ -48,7 +48,7 @@ export function ReviewsReceived({ userId }: { userId: number }) {
   }, [load])
 
   return (
-    <Card>
+    <Card id="reviews" className="scroll-mt-24">
       <CardHeader>
         <CardTitle>Reviews</CardTitle>
       </CardHeader>

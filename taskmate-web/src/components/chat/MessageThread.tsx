@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react"
-import { format, isSameDay, isToday, isYesterday, parseISO } from "date-fns"
 import { ArrowLeft, MessagesSquare } from "lucide-react"
 import { Link } from "react-router-dom"
 import { toast } from "sonner"
@@ -12,43 +11,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { usePolling } from "@/hooks/usePolling"
+import { formatDayLabel, isNewMessageDay } from "@/lib/format"
 import { getInitials } from "@/lib/utils"
 import { useChatStore } from "@/stores/useChatStore"
-import type { Conversation, Message } from "@/types"
+import type { Conversation } from "@/types"
 
-function dayLabel(value: string | null): string {
-  if (!value) {
-    return ""
-  }
-
-  try {
-    const date = parseISO(value)
-
-    if (isToday(date)) {
-      return "Today"
-    }
-
-    if (isYesterday(date)) {
-      return "Yesterday"
-    }
-
-    return format(date, "MMMM d, yyyy")
-  } catch {
-    return ""
-  }
-}
-
-function startsNewDay(message: Message, previous: Message | undefined): boolean {
-  if (!previous || !message.created_at || !previous.created_at) {
-    return Boolean(message.created_at)
-  }
-
-  try {
-    return !isSameDay(parseISO(message.created_at), parseISO(previous.created_at))
-  } catch {
-    return false
-  }
-}
 
 export function MessageThread({ conversation }: { conversation: Conversation }) {
   const messages = useChatStore((state) => state.messages)
@@ -211,11 +178,11 @@ export function MessageThread({ conversation }: { conversation: Conversation }) 
 
               return (
                 <div key={message.id} className="space-y-3">
-                  {startsNewDay(message, previous) ? (
+                  {isNewMessageDay(message, previous) ? (
                     <div className="flex items-center gap-3">
                       <span className="h-px flex-1 bg-border" />
                       <span className="text-[11px] font-medium text-muted-foreground">
-                        {dayLabel(message.created_at)}
+                        {formatDayLabel(message.created_at)}
                       </span>
                       <span className="h-px flex-1 bg-border" />
                     </div>

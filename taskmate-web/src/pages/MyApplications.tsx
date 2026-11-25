@@ -1,3 +1,4 @@
+import { usePageTitle } from "@/hooks/usePageTitle"
 import { useEffect, useMemo, useState } from "react"
 import { SearchX } from "lucide-react"
 import { Link, useSearchParams } from "react-router-dom"
@@ -35,6 +36,7 @@ function pageParam(value: string | null): number {
 }
 
 export function MyApplicationsPage() {
+  usePageTitle("My applications")
   const [searchParams, setSearchParams] = useSearchParams()
   const applications = useApplicationStore((state) => state.myApplications)
   const meta = useApplicationStore((state) => state.myMeta)

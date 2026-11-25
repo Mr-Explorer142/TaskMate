@@ -1,8 +1,10 @@
+import { usePageTitle } from "@/hooks/usePageTitle"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 import { TaskForm } from "@/components/tasks/TaskForm"
 
 export function CreateTaskPage() {
+  usePageTitle("Post a task")
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div className="space-y-1">

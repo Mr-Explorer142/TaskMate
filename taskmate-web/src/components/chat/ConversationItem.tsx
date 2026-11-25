@@ -1,22 +1,10 @@
-import { formatDistanceToNow, parseISO } from "date-fns"
 import { Link } from "react-router-dom"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { formatRelativeDate } from "@/lib/format"
 import { getInitials } from "@/lib/utils"
 import { useAuthStore } from "@/stores/useAuthStore"
 import type { Conversation } from "@/types"
-
-function relativeTime(value: string | null): string {
-  if (!value) {
-    return ""
-  }
-
-  try {
-    return formatDistanceToNow(parseISO(value), { addSuffix: true })
-  } catch {
-    return ""
-  }
-}
 
 export function ConversationItem({
   conversation,
@@ -58,7 +46,7 @@ export function ConversationItem({
           </p>
           {lastMessage ? (
             <span className="shrink-0 text-[11px] text-muted-foreground">
-              {relativeTime(lastMessage.created_at)}
+              {formatRelativeDate(lastMessage.created_at)}
             </span>
           ) : null}
         </div>

@@ -1,19 +1,6 @@
-import { format, parseISO } from "date-fns"
-
+import { formatTime } from "@/lib/format"
 import { useAuthStore } from "@/stores/useAuthStore"
 import type { Message } from "@/types"
-
-function messageTime(value: string | null): string {
-  if (!value) {
-    return ""
-  }
-
-  try {
-    return format(parseISO(value), "h:mm a")
-  } catch {
-    return ""
-  }
-}
 
 export function MessageBubble({ message }: { message: Message }) {
   const ownId = useAuthStore((state) => state.user?.id)
@@ -33,7 +20,7 @@ export function MessageBubble({ message }: { message: Message }) {
         {message.body}
       </div>
       <span className="mt-1 px-1 text-[11px] text-muted-foreground">
-        {message.pending ? "Sending..." : messageTime(message.created_at)}
+        {message.pending ? "Sending..." : formatTime(message.created_at)}
       </span>
     </div>
   )

@@ -48,7 +48,7 @@ export function VerifyEmailBanner() {
             onClick={() => void handleResend()}
           >
             {sending ? <Loader2 className="size-4 animate-spin" /> : null}
-            {sending ? "Sending..." : "Resend"}
+            {sending ? "Sending..." : "Resend code"}
           </Button>
         </span>
       </div>

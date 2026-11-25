@@ -1,5 +1,4 @@
 import { useRef, useState } from "react"
-import { format } from "date-fns"
 import { Download, FileText, Loader2, Trash2, Upload } from "lucide-react"
 import { toast } from "sonner"
 
@@ -25,6 +24,7 @@ import {
 } from "@/components/ui/card"
 import { useAuthStore } from "@/stores/useAuthStore"
 import { saveBlob } from "@/lib/download"
+import { formatDate } from "@/lib/format"
 import type { User } from "@/types"
 
 const MAX_BYTES = 5 * 1024 * 1024
@@ -138,7 +138,7 @@ export function CvCard({ user }: { user: User }) {
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {user.cv_uploaded_at
-                    ? `Uploaded ${format(new Date(user.cv_uploaded_at), "MMM d, yyyy")}`
+                    ? `Uploaded ${formatDate(user.cv_uploaded_at)}`
                     : "Uploaded"}
                 </p>
               </div>

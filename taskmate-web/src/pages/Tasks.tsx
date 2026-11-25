@@ -1,3 +1,4 @@
+import { usePageTitle } from "@/hooks/usePageTitle"
 import { useEffect, useMemo } from "react"
 import { SearchX } from "lucide-react"
 import { useSearchParams } from "react-router-dom"
@@ -44,6 +45,7 @@ function parseFilters(params: URLSearchParams): TaskFiltersValue {
 }
 
 export function TasksPage() {
+  usePageTitle("Tasks")
   const [searchParams, setSearchParams] = useSearchParams()
   const tasks = useTaskStore((state) => state.tasks)
   const meta = useTaskStore((state) => state.meta)
