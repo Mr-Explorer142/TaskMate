@@ -258,6 +258,8 @@ class TaskController extends Controller
                 'applications',
                 'applications as accepted_applications_count' => fn (Builder $query) => $query
                     ->where('status', ApplicationStatus::Accepted->value),
+                'applications as pending_applications_count' => fn (Builder $query) => $query
+                    ->where('status', ApplicationStatus::Pending->value),
             ]);
     }
 
@@ -273,6 +275,8 @@ class TaskController extends Controller
             'applications',
             'applications as accepted_applications_count' => fn (Builder $query) => $query
                 ->where('status', ApplicationStatus::Accepted->value),
+            'applications as pending_applications_count' => fn (Builder $query) => $query
+                ->where('status', ApplicationStatus::Pending->value),
         ]);
     }
 

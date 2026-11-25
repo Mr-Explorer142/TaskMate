@@ -86,8 +86,10 @@ export interface Task {
   open_slots: number
   is_full: boolean
   applications_count?: number
+  pending_count?: number
   uploader?: TaskUploader
   is_owner: boolean
+  my_application_id: number | null
   my_application_status: ApplicationStatus | null
 }
 
@@ -137,16 +139,35 @@ export interface Paginated<T> {
   meta: PaginationMeta
 }
 
+export interface ApplicationApplicant {
+  id: number
+  name: string
+  avatar: string | null
+  bio: string | null
+  skills: string[]
+  average_rating: number | null
+  has_cv: boolean
+  profile_links: ProfileLink[]
+}
+
+export interface ApplicationTaskSummary {
+  id: number
+  title: string
+  type: TaskType
+  reward: string
+  status: TaskStatus
+  team_size: number
+  accepted_count: number
+}
+
 export interface Application {
   id: number
-  task_id: number
-  user_id: number
-  message: string | null
   status: ApplicationStatus
-  accepted_at: string | null
-  left_at: string | null
+  message: string | null
   created_at: string
-  updated_at: string
+  accepted_at: string | null
+  applicant?: ApplicationApplicant
+  task?: ApplicationTaskSummary
 }
 
 export interface ApiEnvelope<T> {

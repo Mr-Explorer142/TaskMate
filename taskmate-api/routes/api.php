@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\ProfileController;
@@ -44,4 +45,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/tasks/{task}', [TaskController::class, 'update']);
     Route::patch('/tasks/{task}/cancel', [TaskController::class, 'cancel']);
     Route::delete('/tasks/{task}', [TaskController::class, 'destroy']);
+
+    Route::post('/tasks/{task}/apply', [ApplicationController::class, 'apply'])
+        ->middleware('throttle:30,1');
+    Route::get('/tasks/{task}/applications', [ApplicationController::class, 'taskApplications']);
+
+    Route::get('/my/applications', [ApplicationController::class, 'myApplications']);
+    Route::delete('/applications/{application}', [ApplicationController::class, 'withdraw']);
+    Route::patch('/applications/{application}/accept', [ApplicationController::class, 'accept']);
+    Route::patch('/applications/{application}/reject', [ApplicationController::class, 'reject']);
 });

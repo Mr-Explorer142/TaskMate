@@ -75,11 +75,8 @@ export function TaskCard({
           <SlotsIndicator accepted={task.accepted_count} teamSize={task.team_size} />
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
             <span>{formatDeadline(task.deadline)}</span>
-            {showApplicants && task.applications_count !== undefined ? (
-              <span>
-                {task.applications_count}{" "}
-                {task.applications_count === 1 ? "applicant" : "applicants"}
-              </span>
+            {showApplicants ? (
+              <span>{task.pending_count ?? 0} pending</span>
             ) : null}
           </div>
         </div>

@@ -24,21 +24,11 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { useAuthStore } from "@/stores/useAuthStore"
+import { saveBlob } from "@/lib/download"
 import type { User } from "@/types"
 
 const MAX_BYTES = 5 * 1024 * 1024
 const ALLOWED_EXTENSIONS = ["pdf", "doc", "docx"]
-
-function saveBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob)
-  const anchor = document.createElement("a")
-  anchor.href = url
-  anchor.download = filename
-  document.body.appendChild(anchor)
-  anchor.click()
-  anchor.remove()
-  URL.revokeObjectURL(url)
-}
 
 export function CvCard({ user }: { user: User }) {
   const setUser = useAuthStore((state) => state.setUser)

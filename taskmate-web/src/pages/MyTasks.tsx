@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { Plus, SearchX, XCircle } from "lucide-react"
+import { Plus, SearchX, Users, XCircle } from "lucide-react"
 import { Link, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 
@@ -188,6 +188,12 @@ export function MyTasksPage() {
                   showApplicants
                   actions={
                     <>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to={`/tasks/${task.id}/applicants`}>
+                          <Users className="size-4" />
+                          Applicants
+                        </Link>
+                      </Button>
                       <Button variant="outline" size="sm" asChild>
                         <Link to={`/tasks/${task.id}`}>View</Link>
                       </Button>

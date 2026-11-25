@@ -59,6 +59,13 @@ PUT    /api/v1/tasks/{task}             # Bearer token required
 PATCH  /api/v1/tasks/{task}/cancel      # Bearer token required
 DELETE /api/v1/tasks/{task}             # Bearer token required
 GET    /api/v1/my/tasks                 # Bearer token required
+
+POST   /api/v1/tasks/{task}/apply       # Bearer token required
+GET    /api/v1/tasks/{task}/applications  # Bearer token required (owner only)
+DELETE /api/v1/applications/{application} # Bearer token required
+GET    /api/v1/my/applications          # Bearer token required
+PATCH  /api/v1/applications/{application}/accept  # Bearer token required (owner only)
+PATCH  /api/v1/applications/{application}/reject  # Bearer token required (owner only)
 ```
 
 ## Tasks
@@ -90,6 +97,45 @@ Business rules:
 - List responses return `{ data, links, meta }`; single-task responses return
   `{ data, message }`. State-rule violations return `422`; delete conflicts
   return `409`.
+
+## Applications
+
+Applicants can apply to any open task, and owners review, accept, or reject
+them. Accepted applicants fill team slots until the task is `full`.
+
+```
+POST   /api/v1/tasks/{task}/apply
+       { "message": "Optional note, up to 1000 characters." }
+
+DELETE /api/v1/applications/{application}        # Withdraw a pending application
+
+GET    /api/v1/my/applications?filter[status]=pending&page=1
+GET    /api/v1/tasks/{task}/applications?filter[status]=pending&page=1
+
+PATCH  /api/v1/applications/{application}/accept
+PATCH  /api/v1/applications/{application}/reject
+```
+
+Business rules:
+
+- A user can apply to a task once; applying again returns `409`
+  (`You have already applied to this task.`).
+- Applications are accepted only while the task is `open`; a full, cancelled,
+  completed, or in-progress task returns `409` with a specific message.
+- Rejected applicants cannot re-apply to the same task (`409`).
+- Owners cannot apply to their own task (`403`).
+- Only pending applications can be withdrawn (`409` otherwise).
+- Only the task owner can list applicants or accept/reject applications
+  (`403` elsewhere). Accepting when the team is already full returns `409`
+  (`Team is already full.`).
+- Accepting fills a slot; when the last slot is filled the task becomes `full`.
+- `GET /my/applications` returns 12 per page (newest first);
+  `GET /tasks/{task}/applications` returns 20 per page with pending first.
+- Apply is rate limited to 30 requests per minute.
+- Applicant payloads expose public profile fields only (name, avatar, bio,
+  skills, rating, `has_cv`, links); owner task lists also include
+  owner-only `pending_count`, plus each task exposes `my_application_id` and
+  `my_application_status` to the current user.
 
 ## Setup
 
