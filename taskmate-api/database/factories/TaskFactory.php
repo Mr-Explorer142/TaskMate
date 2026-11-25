@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class TaskFactory extends Factory
 {
+    use ForceFillsAttributes;
+
     /**
      * Skills available for generated tasks.
      *

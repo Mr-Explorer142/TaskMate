@@ -2,6 +2,7 @@
 
 use App\Models\Application;
 use App\Models\Conversation;
+use App\Models\Message;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -12,11 +13,21 @@ function conversationBetween(User $first, User $second, Task $task): Conversatio
         ? [$first->id, $second->id]
         : [$second->id, $first->id];
 
-    return Conversation::query()->create([
+    return Conversation::factory()->create([
         'task_id' => $task->id,
         'user_one_id' => $oneId,
         'user_two_id' => $twoId,
     ]);
+}
+
+/**
+ * @param  array<string, mixed>  $attributes
+ */
+function conversationTestMessage(Conversation $conversation, array $attributes): Message
+{
+    return Message::factory()->create(array_merge([
+        'conversation_id' => $conversation->id,
+    ], $attributes));
 }
 
 it('lets a non-owner start a conversation with the task uploader', function () {
@@ -132,7 +143,7 @@ it('forbids outsiders from reading or sending messages', function () {
     $second = User::factory()->create();
     $task = Task::factory()->open()->create(['uploader_id' => $first->id]);
     $conversation = conversationBetween($first, $second, $task);
-    $conversation->messages()->create([
+    conversationTestMessage($conversation, [
         'sender_id' => $first->id,
         'body' => 'Private message',
     ]);
@@ -159,21 +170,21 @@ it('orders conversations by last message and reports unread counts', function ()
     $firstConversation = conversationBetween($viewer, $firstPartner, $task);
     $secondConversation = conversationBetween($viewer, $secondPartner, $task);
 
-    $firstConversation->messages()->create([
+    conversationTestMessage($firstConversation, [
         'sender_id' => $firstPartner->id,
         'body' => 'Older message',
         'created_at' => now()->subMinutes(10),
         'updated_at' => now()->subMinutes(10),
     ]);
 
-    $firstConversation->messages()->create([
+    conversationTestMessage($firstConversation, [
         'sender_id' => $viewer->id,
         'body' => 'Newer reply',
         'created_at' => now()->subMinutes(5),
         'updated_at' => now()->subMinutes(5),
     ]);
 
-    $secondConversation->messages()->create([
+    conversationTestMessage($secondConversation, [
         'sender_id' => $secondPartner->id,
         'body' => 'Newest message',
         'read_at' => now(),
@@ -203,7 +214,7 @@ it('paginates conversations to twenty and keeps query counts bounded', function 
     foreach (range(1, 23) as $index) {
         $partner = User::factory()->create();
         $conversation = conversationBetween($viewer, $partner, $task);
-        $conversation->messages()->create([
+        conversationTestMessage($conversation, [
             'sender_id' => $partner->id,
             'body' => "Message {$index}",
         ]);

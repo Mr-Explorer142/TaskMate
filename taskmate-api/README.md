@@ -1,8 +1,9 @@
 # TaskMate API
 
 The Laravel REST API behind TaskMate, a task marketplace where people post
-tasks, build teams, and collaborate on real projects. Day 6 adds project
-completion, escrow release/refund, peer reviews, and rating summaries.
+tasks, build teams, and collaborate on real projects. The Day 7 backend MVP adds
+database notifications, password reset, private CV storage configuration,
+health checks, hardened authorization/mass assignment, and demo seed data.
 
 ## Stack
 
@@ -27,15 +28,40 @@ completion, escrow release/refund, peer reviews, and rating summaries.
   redirects and callbacks. The callback redirects to the frontend with a Sanctum
   token.
 
+### Password reset
+
+```http
+POST /api/v1/auth/password/forgot
+{ "email": "user@example.com" }
+
+POST /api/v1/auth/password/reset
+{
+  "email": "user@example.com",
+  "token": "reset-token-from-email",
+  "password": "new-password",
+  "password_confirmation": "new-password"
+}
+```
+
+The forgot endpoint always returns the same message whether or not the account
+exists. Reset emails link to
+`{FRONTEND_URL}/reset-password?token={token}&email={email}`; the frontend must
+post the token back to the reset endpoint. Successful resets invalidate the old
+token. Both password endpoints, along with login and register, are limited to
+10 requests per minute.
+
 ## Auth & profile endpoints
 
 ```
 POST   /api/v1/auth/register
 POST   /api/v1/auth/login
+POST   /api/v1/auth/password/forgot
+POST   /api/v1/auth/password/reset
 POST   /api/v1/auth/logout              # Bearer token required
 GET    /api/v1/auth/me                  # Bearer token required
 POST   /api/v1/auth/email/verify
 POST   /api/v1/auth/email/resend        # Bearer token required
+GET    /api/v1/health                   # Public, no database access
 
 GET    /api/v1/auth/google/redirect
 GET    /api/v1/auth/google/callback
@@ -84,6 +110,11 @@ GET    /api/v1/conversations/unread-count  # Bearer token required
 GET    /api/v1/conversations/{conversation}/messages  # Bearer token required
 POST   /api/v1/conversations/{conversation}/messages  # Bearer token required
 POST   /api/v1/conversations/{conversation}/read      # Bearer token required
+
+GET    /api/v1/notifications             # Bearer token required
+GET    /api/v1/notifications/unread-count # Bearer token required
+POST   /api/v1/notifications/{id}/read   # Bearer token required
+POST   /api/v1/notifications/read-all    # Bearer token required
 ```
 
 ## Tasks
@@ -289,23 +320,119 @@ requests per minute. `read` marks every unread message from the other
 participant and returns `{ "data": { "updated": 3 } }`. The API is polling
 based; no websockets are required.
 
+## Database notifications
+
+Notifications are stored in the `notifications` table and delivered through the
+database channel only. Notification jobs use `ShouldQueueAfterCommit`, so no row
+is written if the surrounding transaction rolls back. The actor who caused an
+event is excluded from the recipient list, and direct messages never generate
+notifications.
+
+Notifications are created for these events:
+
+- `application_received` — task owner, when someone applies.
+- `application_accepted` / `application_rejected` — applicant, when the owner
+  accepts or rejects.
+- `member_left` — task owner, when an accepted member leaves.
+- `project_started` / `project_completed` — every accepted team member.
+- `project_cancelled` — every accepted team member when an in-progress project
+  is cancelled.
+- `review_received` — reviewee, when a peer review is submitted.
+
+Team-wide events use one bulk insert job instead of one query per user.
+
+```http
+GET /api/v1/notifications?filter[unread]=1&page=1
+GET /api/v1/notifications/unread-count
+POST /api/v1/notifications/{id}/read
+POST /api/v1/notifications/read-all
+```
+
+The list returns 15 notifications per page, newest first:
+
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "type": "project_started",
+      "title": "Project started",
+      "body": "\"Task title\" is now in progress.",
+      "data": { "task_id": 12 },
+      "read_at": null,
+      "created_at": "2026-11-26T10:00:00.000000Z"
+    }
+  ],
+  "links": {},
+  "meta": { "total": 1 }
+}
+```
+
+`unread-count` returns `{ "count": 2 }`. Marking one notification returns the
+updated row under `data`; `read-all` returns `{ "data": { "updated": 2 } }`.
+A user can only read their own notifications (`404` otherwise).
+
+## Errors, health and rate limits
+
+All API errors use a consistent JSON envelope:
+
+```json
+{ "message": "The given data was invalid.", "errors": { "email": ["..."] } }
+```
+
+Validation failures add `errors`; other errors contain only `message`. This
+covers `401`, `403`, `404`, `405`, `409`, `419` (CSRF token mismatch), `422`,
+and `429`. With `APP_DEBUG=false`, exception traces are never returned.
+
+Current rate limits:
+
+| Endpoints | Limit |
+| --- | --- |
+| Login, register, password forgot/reset | 10/minute |
+| Email verification / resend | 6/minute, 3/minute |
+| Apply to a task | 30/minute |
+| Send a message | 60/minute |
+| CV upload | 20/minute |
+
+`GET /api/v1/health` is public, returns `{ "status": "ok" }`, and performs no
+database query. It is suitable for container and load balancer health checks.
+
 ## Setup
 
 ```bash
 composer install
 cp .env.example .env
 php artisan key:generate
-php artisan migrate --seed
-php artisan storage:link
+php artisan migrate:fresh --seed
 php artisan serve
 ```
 
-Configure the database, mail (used for verification codes), and OAuth
-credentials in `.env`:
+In a second terminal, run the queue worker so notifications are persisted:
+
+```bash
+php artisan queue:work
+```
+
+`migrate:fresh --seed` is re-runnable and creates the demo accounts below. All
+three use the password `password`:
+
+| Email | Purpose |
+| --- | --- |
+| `demo@taskmate.test` | Main demo user with tasks, applications, messages, reviews and notifications |
+| `alice@taskmate.test` | Secondary collaborator account |
+| `bob@taskmate.test` | Secondary collaborator account |
+
+Configure the database, queue, mail (verification codes and password resets),
+frontend URL, private CV disk, and OAuth credentials in `.env`:
 
 ```env
 APP_URL=http://localhost:8000
+# Comma-separated origins are allowed for local multi-frontend setups.
 FRONTEND_URL=http://localhost:5173
+
+QUEUE_CONNECTION=database
+# Must be a private, persistent disk. The public disk is rejected.
+CV_DISK=local
 
 MAIL_MAILER=smtp
 MAIL_HOST=127.0.0.1
@@ -325,5 +452,14 @@ GITHUB_REDIRECT_URI="${APP_URL}/api/v1/auth/github/callback"
 ## Tests
 
 ```bash
-php artisan test
+./vendor/bin/pest
+php artisan route:list --path=api
 ```
+
+The suite covers notification triggers and rollback behavior, notification
+endpoints, the API-wide auth audit, privacy of nested user payloads, mass
+assignment hardening, error envelopes, password reset, seed invariants, and one
+complete registration-to-review journey. Tests use SQLite in memory with a
+synchronous queue, so no worker or external service is needed for them.
+
+Seed data and deployment notes are in [DEPLOY.md](DEPLOY.md).

@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 function fakeCv(string $name = 'resume.pdf', int $kilobytes = 100): UploadedFile
@@ -125,4 +126,21 @@ it('deletes the authenticated user CV', function () {
     expect($user->cv_path)->toBeNull()
         ->and($user->cv_original_name)->toBeNull()
         ->and($user->cv_uploaded_at)->toBeNull();
+});
+
+it('rate limits CV uploads to twenty requests per minute', function () {
+    Storage::fake('local');
+    Cache::flush();
+
+    authAs();
+
+    foreach (range(1, 20) as $index) {
+        $this->post('/api/v1/profile/cv', [
+            'cv' => fakeCv(),
+        ], ['Accept' => 'application/json'])->assertOk();
+    }
+
+    $this->post('/api/v1/profile/cv', [
+        'cv' => fakeCv(),
+    ], ['Accept' => 'application/json'])->assertStatus(429);
 });

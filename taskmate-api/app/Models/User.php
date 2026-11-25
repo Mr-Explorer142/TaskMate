@@ -20,10 +20,6 @@ use Laravel\Sanctum\HasApiTokens;
     'bio',
     'skills',
     'avatar',
-    'cv_path',
-    'cv_original_name',
-    'cv_uploaded_at',
-    'points_balance',
 ])]
 #[Hidden(['password', 'remember_token', 'cv_path'])]
 class User extends Authenticatable

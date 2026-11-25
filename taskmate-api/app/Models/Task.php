@@ -12,16 +12,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
-    'uploader_id',
     'title',
     'description',
     'team_size',
     'type',
     'reward',
-    'escrow_amount',
-    'status',
-    'started_at',
-    'completed_at',
     'deadline',
     'skills',
 ])]

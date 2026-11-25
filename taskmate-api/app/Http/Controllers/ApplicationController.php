@@ -8,6 +8,11 @@ use App\Http\Requests\ApplyRequest;
 use App\Http\Resources\ApplicationResource;
 use App\Models\Application;
 use App\Models\Task;
+use App\Notifications\ApplicationAccepted;
+use App\Notifications\ApplicationReceived;
+use App\Notifications\ApplicationRejected;
+use App\Notifications\MemberLeft;
+use App\Notifications\NotificationDispatcher;
 use App\Support\ApiResponse;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,6 +27,8 @@ use Spatie\QueryBuilder\QueryBuilder;
 
 class ApplicationController extends Controller
 {
+    public function __construct(private readonly NotificationDispatcher $notifications) {}
+
     /**
      * Apply to an open task.
      */
@@ -47,12 +54,14 @@ class ApplicationController extends Controller
         }
 
         try {
-            $application = Application::query()->create([
+            $application = new Application;
+            $application->forceFill([
                 'task_id' => $task->id,
                 'user_id' => $request->user()->id,
                 'message' => $request->validated('message'),
                 'status' => ApplicationStatus::Pending,
             ]);
+            $application->save();
         } catch (QueryException $exception) {
             if ($this->isDuplicateKey($exception)) {
                 abort(409, 'You have already applied to this task.');
@@ -60,6 +69,18 @@ class ApplicationController extends Controller
 
             throw $exception;
         }
+
+        $this->notifications->send(
+            $task->uploader_id,
+            new ApplicationReceived(
+                $task->id,
+                $application->id,
+                $application->user_id,
+                $request->user()->name,
+                $task->title,
+            ),
+            $application->user_id,
+        );
 
         $application->load($this->applicationRelations());
 
@@ -162,16 +183,22 @@ class ApplicationController extends Controller
                 abort(409, 'Only open tasks can accept applications.');
             }
 
-            $application->update([
+            $application->forceFill([
                 'status' => ApplicationStatus::Accepted,
                 'accepted_at' => now(),
-            ]);
+            ])->save();
 
             $accepted = $task->acceptedApplications()->count();
 
             if ($accepted >= $task->team_size) {
-                $task->update(['status' => TaskStatus::Full]);
+                $task->forceFill(['status' => TaskStatus::Full])->save();
             }
+
+            $this->notifications->send(
+                $application->user_id,
+                new ApplicationAccepted($task->id, $application->id, $task->title),
+                $task->uploader_id,
+            );
 
             return $application;
         });
@@ -192,7 +219,14 @@ class ApplicationController extends Controller
             abort(409, 'Only pending applications can be rejected.');
         }
 
-        $application->update(['status' => ApplicationStatus::Rejected]);
+        $application->forceFill(['status' => ApplicationStatus::Rejected])->save();
+
+        $this->notifications->send(
+            $application->user_id,
+            new ApplicationRejected($application->task_id, $application->id, $application->task->title),
+            $application->task->uploader_id,
+        );
+
         $application->load($this->applicationRelations());
 
         return ApiResponse::success(new ApplicationResource($application), 'Application rejected.');
@@ -221,14 +255,20 @@ class ApplicationController extends Controller
                 abort(409, 'The project has already started, you cannot leave');
             }
 
-            $application->update([
+            $application->forceFill([
                 'status' => ApplicationStatus::Left,
                 'left_at' => now(),
-            ]);
+            ])->save();
 
             if ($task->status === TaskStatus::Full) {
-                $task->update(['status' => TaskStatus::Open]);
+                $task->forceFill(['status' => TaskStatus::Open])->save();
             }
+
+            $this->notifications->send(
+                $task->uploader_id,
+                new MemberLeft($task->id, $application->user_id, $application->user->name, $task->title),
+                $application->user_id,
+            );
 
             return $application;
         });

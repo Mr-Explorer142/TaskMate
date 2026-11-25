@@ -2,8 +2,11 @@
 
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\ConversationController;
+use App\Http\Controllers\HealthController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PointController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfileLinkController;
@@ -11,8 +14,16 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\TaskController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/auth/register', [AuthController::class, 'register']);
-Route::post('/auth/login', [AuthController::class, 'login']);
+Route::get('/health', HealthController::class);
+
+Route::post('/auth/register', [AuthController::class, 'register'])
+    ->middleware('throttle:10,1');
+Route::post('/auth/login', [AuthController::class, 'login'])
+    ->middleware('throttle:10,1');
+Route::post('/auth/password/forgot', [PasswordResetController::class, 'forgot'])
+    ->middleware('throttle:10,1');
+Route::post('/auth/password/reset', [PasswordResetController::class, 'reset'])
+    ->middleware('throttle:10,1');
 Route::post('/auth/email/verify', [AuthController::class, 'verifyEmail'])
     ->middleware('throttle:6,1');
 
@@ -29,7 +40,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::put('/profile', [ProfileController::class, 'update']);
 
-    Route::post('/profile/cv', [ProfileController::class, 'uploadCv']);
+    Route::post('/profile/cv', [ProfileController::class, 'uploadCv'])
+        ->middleware('throttle:20,1');
     Route::delete('/profile/cv', [ProfileController::class, 'deleteCv']);
 
     Route::get('/profile/links', [ProfileLinkController::class, 'index']);
@@ -37,6 +49,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/profile/links/reorder', [ProfileLinkController::class, 'reorder']);
     Route::put('/profile/links/{link}', [ProfileLinkController::class, 'update']);
     Route::delete('/profile/links/{link}', [ProfileLinkController::class, 'destroy']);
+
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead']);
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead']);
 
     Route::get('/users/{user}/cv', [ProfileController::class, 'downloadCv']);
     Route::get('/users/{user}/reviews', [ReviewController::class, 'forUser']);

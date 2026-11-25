@@ -8,6 +8,8 @@ use App\Http\Resources\ReviewResource;
 use App\Models\Review;
 use App\Models\Task;
 use App\Models\User;
+use App\Notifications\NotificationDispatcher;
+use App\Notifications\ReviewReceived;
 use App\Support\ApiResponse;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -16,6 +18,8 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ReviewController extends Controller
 {
+    public function __construct(private readonly NotificationDispatcher $notifications) {}
+
     /**
      * List the participants the current user still needs to review.
      */
@@ -75,13 +79,15 @@ class ReviewController extends Controller
         $this->ensureNotDuplicated($task, $reviewerId, $revieweeId);
 
         try {
-            $review = Review::query()->create([
+            $review = new Review;
+            $review->forceFill([
                 'task_id' => $task->id,
                 'reviewer_id' => $reviewerId,
                 'reviewee_id' => $revieweeId,
                 'rating' => (int) $data['rating'],
                 'comment' => $data['comment'] ?? null,
             ]);
+            $review->save();
         } catch (QueryException $exception) {
             if ($this->isDuplicateKey($exception)) {
                 abort(409, 'You have already reviewed this member for this task.');
@@ -89,6 +95,12 @@ class ReviewController extends Controller
 
             throw $exception;
         }
+
+        $this->notifications->send(
+            $revieweeId,
+            new ReviewReceived($task->id, $reviewerId, $request->user()->name, $task->title, (int) $data['rating']),
+            $reviewerId,
+        );
 
         $review->load(['reviewer:id,name,avatar', 'task:id,title']);
 

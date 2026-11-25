@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['user_id', 'platform', 'label', 'url', 'sort_order'])]
+#[Fillable(['platform', 'label', 'url', 'sort_order'])]
 class ProfileLink extends Model
 {
     /** @use HasFactory<ProfileLinkFactory> */

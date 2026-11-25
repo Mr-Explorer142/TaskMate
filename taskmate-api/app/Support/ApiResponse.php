@@ -21,4 +21,20 @@ final class ApiResponse
             'message' => $message,
         ], $status);
     }
+
+    /**
+     * Build the standard API error envelope.
+     *
+     * @param  array<string, mixed>|null  $errors
+     */
+    public static function error(string $message, int $status, ?array $errors = null): JsonResponse
+    {
+        $payload = ['message' => $message];
+
+        if ($errors !== null) {
+            $payload['errors'] = $errors;
+        }
+
+        return response()->json($payload, $status);
+    }
 }

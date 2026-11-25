@@ -55,19 +55,19 @@ class ProfileController extends Controller
         $path = $file->storeAs(
             'cvs/'.$user->id,
             Str::random(40).'.'.$extension,
-            'local',
+            $this->cvDisk(),
         );
 
         $previousPath = $user->cv_path;
 
-        $user->update([
+        $user->forceFill([
             'cv_path' => $path,
             'cv_original_name' => $file->getClientOriginalName(),
             'cv_uploaded_at' => now(),
-        ]);
+        ])->save();
 
         if ($previousPath && $previousPath !== $path) {
-            Storage::disk('local')->delete($previousPath);
+            Storage::disk($this->cvDisk())->delete($previousPath);
         }
 
         $user = $user->fresh()->load('profileLinks');
@@ -84,7 +84,7 @@ class ProfileController extends Controller
     {
         abort_unless(filled($user->cv_path), 404, 'CV not found.');
 
-        $disk = Storage::disk('local');
+        $disk = Storage::disk($this->cvDisk());
 
         abort_unless($disk->exists($user->cv_path), 404, 'CV not found.');
 
@@ -101,19 +101,31 @@ class ProfileController extends Controller
         $user = $request->user();
 
         if ($user->cv_path) {
-            Storage::disk('local')->delete($user->cv_path);
+            Storage::disk($this->cvDisk())->delete($user->cv_path);
         }
 
-        $user->update([
+        $user->forceFill([
             'cv_path' => null,
             'cv_original_name' => null,
             'cv_uploaded_at' => null,
-        ]);
+        ])->save();
 
         $user = $user->fresh()->load('profileLinks');
         $user->loadAvg('reviewsReceived', 'rating');
         $user->loadCount('reviewsReceived');
 
         return ApiResponse::success(new UserResource($user), 'CV deleted.');
+    }
+
+    /**
+     * Resolve the configured private disk for CV files.
+     */
+    private function cvDisk(): string
+    {
+        $disk = (string) config('taskmate.cv_disk', 'local');
+
+        abort_if($disk === 'public', 500, 'CV storage must use a private disk.');
+
+        return $disk;
     }
 }
