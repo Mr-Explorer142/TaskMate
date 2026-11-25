@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class ApplicationFactory extends Factory
 {
+    use ForceFillsAttributes;
+
     /**
      * Define the model's default state.
      *

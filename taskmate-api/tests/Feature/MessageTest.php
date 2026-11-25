@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Conversation;
+use App\Models\Message;
 use App\Models\Task;
 use App\Models\User;
 
@@ -10,11 +11,21 @@ function messageTestConversation(User $first, User $second, Task $task): Convers
         ? [$first->id, $second->id]
         : [$second->id, $first->id];
 
-    return Conversation::query()->create([
+    return Conversation::factory()->create([
         'task_id' => $task->id,
         'user_one_id' => $oneId,
         'user_two_id' => $twoId,
     ]);
+}
+
+/**
+ * @param  array<string, mixed>  $attributes
+ */
+function messageTestMessage(Conversation $conversation, array $attributes): Message
+{
+    return Message::factory()->create(array_merge([
+        'conversation_id' => $conversation->id,
+    ], $attributes));
 }
 
 it('returns the latest thirty messages oldest first by default', function () {
@@ -26,7 +37,7 @@ it('returns the latest thirty messages oldest first by default', function () {
     $ids = [];
 
     foreach (range(1, 35) as $index) {
-        $ids[] = $conversation->messages()->create([
+        $ids[] = messageTestMessage($conversation, [
             'sender_id' => $index % 2 === 0 ? $viewer->id : $partner->id,
             'body' => "Message {$index}",
         ])->id;
@@ -49,7 +60,7 @@ it('loads older messages with before_id', function () {
     $ids = [];
 
     foreach (range(1, 35) as $index) {
-        $ids[] = $conversation->messages()->create([
+        $ids[] = messageTestMessage($conversation, [
             'sender_id' => $partner->id,
             'body' => "Message {$index}",
         ])->id;
@@ -72,7 +83,7 @@ it('returns only newer messages with after_id', function () {
     $ids = [];
 
     foreach (range(1, 5) as $index) {
-        $ids[] = $conversation->messages()->create([
+        $ids[] = messageTestMessage($conversation, [
             'sender_id' => $partner->id,
             'body' => "Message {$index}",
         ])->id;
@@ -114,17 +125,17 @@ it('marks only the other participant messages as read', function () {
     $task = Task::factory()->open()->create(['uploader_id' => $viewer->id]);
     $conversation = messageTestConversation($viewer, $partner, $task);
 
-    $firstFromPartner = $conversation->messages()->create([
+    $firstFromPartner = messageTestMessage($conversation, [
         'sender_id' => $partner->id,
         'body' => 'First from partner',
     ]);
 
-    $secondFromPartner = $conversation->messages()->create([
+    $secondFromPartner = messageTestMessage($conversation, [
         'sender_id' => $partner->id,
         'body' => 'Second from partner',
     ]);
 
-    $fromViewer = $conversation->messages()->create([
+    $fromViewer = messageTestMessage($conversation, [
         'sender_id' => $viewer->id,
         'body' => 'From viewer',
     ]);

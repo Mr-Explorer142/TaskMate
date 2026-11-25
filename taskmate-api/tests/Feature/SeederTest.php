@@ -2,10 +2,13 @@
 
 use App\Enums\TaskStatus;
 use App\Enums\TaskType;
+use App\Models\Application;
 use App\Models\PointTransaction;
 use App\Models\Review;
 use App\Models\Task;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 it('seeds completed projects with settled escrow and reviewable teams', function () {
     $this->seed();
@@ -47,4 +50,54 @@ it('seeds completed projects with settled escrow and reviewable teams', function
         });
 
     expect($demoTaskWithPendingReviews)->not->toBeNull();
+});
+
+it('seeds the documented demo accounts with the demo password', function () {
+    $this->seed();
+
+    foreach (['demo@taskmate.test', 'alice@taskmate.test', 'bob@taskmate.test'] as $email) {
+        $user = User::query()->where('email', $email)->firstOrFail();
+
+        expect(Hash::check('password', $user->password))->toBeTrue();
+    }
+});
+
+it('seeds read and unread database notifications for the demo account', function () {
+    $this->seed();
+
+    $demo = User::query()->where('email', 'demo@taskmate.test')->firstOrFail();
+
+    $notifications = DB::table('notifications')
+        ->where('notifiable_type', User::class)
+        ->where('notifiable_id', $demo->id)
+        ->get();
+
+    expect($notifications->count())->toBeGreaterThanOrEqual(3)
+        ->and($notifications->whereNull('read_at')->count())->toBeGreaterThanOrEqual(1)
+        ->and($notifications->whereNotNull('read_at')->count())->toBeGreaterThanOrEqual(1);
+
+    foreach ($notifications as $notification) {
+        $payload = json_decode($notification->data, true);
+
+        expect($payload)->toHaveKeys(['type', 'title', 'body'])
+            ->and($payload['type'])->toBe($notification->type);
+    }
+});
+
+it('keeps seeded accepted counts, balances and escrow consistent', function () {
+    $this->seed();
+
+    foreach (Task::query()->get() as $task) {
+        expect($task->acceptedApplications()->count())->toBeLessThanOrEqual($task->team_size);
+
+        if ($task->status === TaskStatus::InProgress && $task->type === TaskType::Points) {
+            expect((int) $task->escrow_amount)->toBe((int) $task->reward * $task->acceptedApplications()->count());
+        }
+    }
+
+    foreach (User::query()->get() as $user) {
+        expect((int) $user->points_balance)->toBe((int) PointTransaction::query()->where('user_id', $user->id)->sum('amount'));
+    }
+
+    expect(Application::query()->count())->toBeGreaterThan(0);
 });

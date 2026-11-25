@@ -25,7 +25,7 @@ class PointsService
             $locked = $this->lockUser($user);
             $locked->forceFill(['points_balance' => $locked->points_balance + $amount])->save();
 
-            $transaction = PointTransaction::query()->create([
+            $transaction = $this->recordTransaction([
                 'user_id' => $locked->id,
                 'task_id' => null,
                 'amount' => $amount,
@@ -64,7 +64,7 @@ class PointsService
 
             $locked->forceFill(['points_balance' => $locked->points_balance - $amount])->save();
 
-            $transaction = PointTransaction::query()->create([
+            $transaction = $this->recordTransaction([
                 'user_id' => $locked->id,
                 'task_id' => $lockedTask->id,
                 'amount' => -$amount,
@@ -72,7 +72,7 @@ class PointsService
                 'note' => "Escrow for {$lockedTask->title}",
             ]);
 
-            $lockedTask->update(['escrow_amount' => $amount]);
+            $lockedTask->forceFill(['escrow_amount' => $amount])->save();
 
             $this->syncUserBalance($uploader, $locked);
             $this->syncTaskEscrow($task, $lockedTask);
@@ -105,7 +105,7 @@ class PointsService
             $locked = $this->lockUser($member);
             $locked->forceFill(['points_balance' => $locked->points_balance + $amount])->save();
 
-            $transaction = PointTransaction::query()->create([
+            $transaction = $this->recordTransaction([
                 'user_id' => $locked->id,
                 'task_id' => $lockedTask->id,
                 'amount' => $amount,
@@ -113,7 +113,7 @@ class PointsService
                 'note' => "Released points for {$lockedTask->title}",
             ]);
 
-            $lockedTask->update(['escrow_amount' => $lockedTask->escrow_amount - $amount]);
+            $lockedTask->forceFill(['escrow_amount' => $lockedTask->escrow_amount - $amount])->save();
 
             $this->syncUserBalance($member, $locked);
             $this->syncTaskEscrow($task, $lockedTask);
@@ -136,7 +136,7 @@ class PointsService
             $amount = (int) $lockedTask->escrow_amount;
 
             if ($amount <= 0) {
-                $lockedTask->update(['escrow_amount' => 0]);
+                $lockedTask->forceFill(['escrow_amount' => 0])->save();
                 $this->syncTaskEscrow($task, $lockedTask);
 
                 return null;
@@ -146,7 +146,7 @@ class PointsService
 
             $locked->forceFill(['points_balance' => $locked->points_balance + $amount])->save();
 
-            $transaction = PointTransaction::query()->create([
+            $transaction = $this->recordTransaction([
                 'user_id' => $locked->id,
                 'task_id' => $lockedTask->id,
                 'amount' => $amount,
@@ -154,13 +154,27 @@ class PointsService
                 'note' => "Refunded escrow for {$lockedTask->title}",
             ]);
 
-            $lockedTask->update(['escrow_amount' => 0]);
+            $lockedTask->forceFill(['escrow_amount' => 0])->save();
 
             $this->syncUserBalance($lockedTask->uploader, $locked);
             $this->syncTaskEscrow($task, $lockedTask);
 
             return $transaction;
         });
+    }
+
+    /**
+     * Persist a trusted ledger row without exposing ledger fields to mass assignment.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    private function recordTransaction(array $attributes): PointTransaction
+    {
+        $transaction = new PointTransaction;
+        $transaction->forceFill($attributes);
+        $transaction->save();
+
+        return $transaction;
     }
 
     /**

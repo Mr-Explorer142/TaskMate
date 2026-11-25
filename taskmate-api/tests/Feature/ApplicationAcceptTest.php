@@ -123,7 +123,7 @@ it('can accept a pending application after a slot reopens manually', function ()
 
     $pending = Application::factory()->create(['task_id' => $task->id]);
 
-    $task->update(['status' => TaskStatus::Open, 'team_size' => 2]);
+    $task->forceFill(['status' => TaskStatus::Open, 'team_size' => 2])->save();
 
     $this->patchJson("/api/v1/applications/{$pending->id}/accept")->assertOk();
 

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['user_id', 'provider', 'provider_id'])]
+#[Fillable(['provider', 'provider_id'])]
 class SocialAccount extends Model
 {
     /** @use HasFactory<SocialAccountFactory> */

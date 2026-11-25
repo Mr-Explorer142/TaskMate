@@ -10,6 +10,10 @@ use App\Http\Requests\UpdateTaskRequest;
 use App\Http\Resources\TaskResource;
 use App\Http\Resources\TeamMemberResource;
 use App\Models\Task;
+use App\Notifications\NotificationDispatcher;
+use App\Notifications\ProjectCancelled;
+use App\Notifications\ProjectCompleted;
+use App\Notifications\ProjectStarted;
 use App\Services\PointsService;
 use App\Support\ApiResponse;
 use Illuminate\Database\Eloquent\Builder;
@@ -27,6 +31,8 @@ use Spatie\QueryBuilder\QueryBuilder;
 
 class TaskController extends Controller
 {
+    public function __construct(private readonly NotificationDispatcher $notifications) {}
+
     /**
      * List tasks that are available to the public.
      */
@@ -113,14 +119,22 @@ class TaskController extends Controller
                 app(PointsService::class)->escrow($task->uploader, $task, $required);
             }
 
-            $task->update([
+            $acceptedMemberIds = $task->acceptedApplications()->pluck('user_id')->all();
+
+            $task->forceFill([
                 'status' => TaskStatus::InProgress,
                 'started_at' => now(),
-            ]);
+            ])->save();
 
             $task->applications()
                 ->where('status', ApplicationStatus::Pending->value)
                 ->update(['status' => ApplicationStatus::Rejected->value]);
+
+            $this->notifications->send(
+                $acceptedMemberIds,
+                new ProjectStarted($task->id, $task->title),
+                $task->uploader_id,
+            );
 
             return $task;
         });
@@ -147,6 +161,9 @@ class TaskController extends Controller
                 abort(409, 'Only in-progress tasks can be completed.');
             }
 
+            $acceptedMemberIds = $task->acceptedApplications()->pluck('user_id')->all();
+            $releasedPoints = $task->type === TaskType::Points ? (int) $task->reward : null;
+
             if ($task->type === TaskType::Points) {
                 $points = app(PointsService::class);
                 $reward = (int) $task->reward;
@@ -158,10 +175,16 @@ class TaskController extends Controller
                 $points->refund($task);
             }
 
-            $task->update([
+            $task->forceFill([
                 'status' => TaskStatus::Completed,
                 'completed_at' => now(),
-            ]);
+            ])->save();
+
+            $this->notifications->send(
+                $acceptedMemberIds,
+                new ProjectCompleted($task->id, $task->title, $releasedPoints),
+                $task->uploader_id,
+            );
 
             return $task;
         });
@@ -176,11 +199,13 @@ class TaskController extends Controller
      */
     public function store(StoreTaskRequest $request): JsonResponse
     {
-        $task = Task::query()->create([
+        $task = new Task;
+        $task->forceFill([
             ...$request->validated(),
             'uploader_id' => $request->user()->id,
             'status' => TaskStatus::Open,
         ]);
+        $task->save();
 
         $task = $this->loadRelations($task, $request);
 
@@ -262,7 +287,10 @@ class TaskController extends Controller
                 abort(409, 'Completed tasks cannot be cancelled.');
             }
 
-            if ($task->status === TaskStatus::InProgress) {
+            $wasInProgress = $task->status === TaskStatus::InProgress;
+            $acceptedMemberIds = $wasInProgress ? $task->acceptedApplications()->pluck('user_id')->all() : [];
+
+            if ($wasInProgress) {
                 app(PointsService::class)->refund($task);
             } elseif (! in_array($task->status, [TaskStatus::Open, TaskStatus::Full], true)) {
                 throw ValidationException::withMessages([
@@ -270,11 +298,19 @@ class TaskController extends Controller
                 ]);
             }
 
-            $task->update(['status' => TaskStatus::Cancelled]);
+            $task->forceFill(['status' => TaskStatus::Cancelled])->save();
 
             $task->applications()
                 ->where('status', ApplicationStatus::Pending->value)
                 ->update(['status' => ApplicationStatus::Rejected->value]);
+
+            if ($acceptedMemberIds !== []) {
+                $this->notifications->send(
+                    $acceptedMemberIds,
+                    new ProjectCancelled($task->id, $task->title),
+                    $task->uploader_id,
+                );
+            }
         });
 
         $task = $this->loadRelations($task->fresh(), $request);

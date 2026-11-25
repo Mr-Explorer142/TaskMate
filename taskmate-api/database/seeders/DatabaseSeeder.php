@@ -18,6 +18,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
@@ -71,6 +73,30 @@ class DatabaseSeeder extends Seeder
             ],
         ]);
 
+        $alice = User::factory()->create([
+            'name' => 'Alice Demo',
+            'email' => 'alice@taskmate.test',
+            'password' => 'password',
+            'country' => 'US',
+            'bio' => 'Frontend developer looking for focused collaborations.',
+            'skills' => ['React', 'Figma', 'UI Design'],
+        ]);
+
+        $bob = User::factory()->create([
+            'name' => 'Bob Demo',
+            'email' => 'bob@taskmate.test',
+            'password' => 'password',
+            'country' => 'GB',
+            'bio' => 'Backend developer who enjoys Laravel and clean APIs.',
+            'skills' => ['PHP', 'Laravel', 'MySQL'],
+        ]);
+
+        $namedUsers = collect([$alice, $bob]);
+
+        foreach ($namedUsers as $user) {
+            $points->grantBonus($user, $signupBonus, 'Welcome bonus');
+        }
+
         $users = User::factory(10)->create();
 
         foreach ($users as $user) {
@@ -85,6 +111,9 @@ class DatabaseSeeder extends Seeder
                 ]);
             }
         }
+
+        $users = $users->concat($namedUsers)->values();
+        $everyone = $users->concat([$demo])->values();
 
         $statuses = [
             TaskStatus::Open,
@@ -108,8 +137,6 @@ class DatabaseSeeder extends Seeder
             TaskStatus::Cancelled,
             TaskStatus::Cancelled,
         ];
-
-        $everyone = $users->push($demo);
 
         foreach ($statuses as $index => $status) {
             $type = $index % 2 === 0 ? TaskType::Paid : TaskType::Points;
@@ -205,6 +232,7 @@ class DatabaseSeeder extends Seeder
         $this->ensureLeftAndStartedScenarios($demo, $users);
         $this->seedCompletedReviewScenarios($points, $demo, $users);
         $this->seedConversations($demo);
+        $this->seedDemoNotifications($demo);
     }
 
     /**
@@ -355,7 +383,7 @@ class DatabaseSeeder extends Seeder
                 $accepted = $task->acceptedApplications()->count();
 
                 if ($accepted >= $task->team_size) {
-                    $task->update(['status' => TaskStatus::Full]);
+                    $task->forceFill(['status' => TaskStatus::Full])->save();
                 }
             }
         };
@@ -409,11 +437,11 @@ class DatabaseSeeder extends Seeder
             ->get()
             ->each(function (Task $task): void {
                 if ($task->status === TaskStatus::Open && $task->accepted_applications_count >= $task->team_size) {
-                    $task->update(['status' => TaskStatus::Full]);
+                    $task->forceFill(['status' => TaskStatus::Full])->save();
                 }
 
                 if ($task->status === TaskStatus::Full && $task->accepted_applications_count < $task->team_size) {
-                    $task->update(['status' => TaskStatus::Open]);
+                    $task->forceFill(['status' => TaskStatus::Open])->save();
                 }
             });
     }
@@ -548,11 +576,13 @@ class DatabaseSeeder extends Seeder
                 ? [$demo->id, $partner->id]
                 : [$partner->id, $demo->id];
 
-            $conversation = Conversation::query()->create([
+            $conversation = new Conversation;
+            $conversation->forceFill([
                 'task_id' => $task->id,
                 'user_one_id' => $userOneId,
                 'user_two_id' => $userTwoId,
             ]);
+            $conversation->save();
 
             $messageCount = random_int(5, 15);
             $startedAt = now()->subDays(random_int(1, 7))->subMinutes($messageCount * 3);
@@ -579,5 +609,76 @@ class DatabaseSeeder extends Seeder
                 'updated_at' => $startedAt->copy()->addMinutes($messageCount * 3),
             ])->save();
         }
+    }
+
+    /**
+     * Seed a few read and unread database notifications for the demo account.
+     */
+    private function seedDemoNotifications(User $demo): void
+    {
+        $task = Task::query()->where('uploader_id', $demo->id)->first();
+        $taskId = (int) ($task?->id ?? 0);
+        $applicationId = (int) (Application::query()->where('task_id', $taskId)->value('id') ?? 0);
+        $applicantId = (int) (Application::query()->where('task_id', $taskId)->value('user_id') ?? 0);
+        $title = $task?->title ?? 'Demo task';
+        $now = now();
+
+        $definitions = [
+            [
+                'type' => 'application_received',
+                'data' => [
+                    'type' => 'application_received',
+                    'title' => 'New application',
+                    'body' => "Alice Demo applied to \"{$title}\".",
+                    'task_id' => $taskId,
+                    'application_id' => $applicationId,
+                    'user_id' => $applicantId ?: $demo->id,
+                ],
+                'read_at' => null,
+                'minutes_ago' => 4,
+            ],
+            [
+                'type' => 'project_started',
+                'data' => [
+                    'type' => 'project_started',
+                    'title' => 'Project started',
+                    'body' => "\"{$title}\" is now in progress.",
+                    'task_id' => $taskId,
+                ],
+                'read_at' => null,
+                'minutes_ago' => 35,
+            ],
+            [
+                'type' => 'review_received',
+                'data' => [
+                    'type' => 'review_received',
+                    'title' => 'New review',
+                    'body' => "Bob Demo rated you 5/5 for \"{$title}\".",
+                    'task_id' => $taskId,
+                    'user_id' => $applicantId ?: $demo->id,
+                ],
+                'read_at' => $now->copy()->subMinutes(90),
+                'minutes_ago' => 120,
+            ],
+        ];
+
+        $rows = [];
+
+        foreach ($definitions as $definition) {
+            $createdAt = $now->copy()->subMinutes($definition['minutes_ago']);
+
+            $rows[] = [
+                'id' => (string) Str::uuid(),
+                'type' => $definition['type'],
+                'notifiable_type' => User::class,
+                'notifiable_id' => $demo->id,
+                'data' => (string) json_encode($definition['data']),
+                'read_at' => $definition['read_at'],
+                'created_at' => $createdAt,
+                'updated_at' => $createdAt,
+            ];
+        }
+
+        DB::table('notifications')->insert($rows);
     }
 }

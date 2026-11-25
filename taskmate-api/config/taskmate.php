@@ -7,12 +7,25 @@ return [
     | CV Uploads
     |--------------------------------------------------------------------------
     |
-    | CVs are stored on the private "local" disk and only served through an
+    | CVs are stored on a configured private disk and only served through an
     | authenticated endpoint. The maximum file size is expressed in kilobytes.
     |
     */
 
     'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | CV Storage Disk
+    |--------------------------------------------------------------------------
+    |
+    | CV files are private and must never be served from a public disk. The
+    | configured disk must be persistent in production so uploads survive
+    | deployments and instance replacement.
+    |
+    */
+
+    'cv_disk' => env('CV_DISK', 'local'),
 
     /*
     |--------------------------------------------------------------------------

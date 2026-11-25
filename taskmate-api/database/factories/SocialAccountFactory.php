@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class SocialAccountFactory extends Factory
 {
+    use ForceFillsAttributes;
+
     /**
      * Define the model's default state.
      *

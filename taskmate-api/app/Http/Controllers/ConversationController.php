@@ -76,11 +76,17 @@ class ConversationController extends Controller
         $created = false;
 
         try {
-            $conversation = DB::transaction(fn (): Conversation => Conversation::query()->create([
-                'task_id' => $task->id,
-                'user_one_id' => $userOneId,
-                'user_two_id' => $userTwoId,
-            ]));
+            $conversation = DB::transaction(function () use ($task, $userOneId, $userTwoId): Conversation {
+                $conversation = new Conversation;
+                $conversation->forceFill([
+                    'task_id' => $task->id,
+                    'user_one_id' => $userOneId,
+                    'user_two_id' => $userTwoId,
+                ]);
+                $conversation->save();
+
+                return $conversation;
+            });
 
             $created = true;
         } catch (QueryException $exception) {
@@ -170,10 +176,13 @@ class ConversationController extends Controller
     {
         $this->ensureParticipant($conversation, $request->user());
 
-        $message = $conversation->messages()->create([
+        $message = new Message;
+        $message->forceFill([
+            'conversation_id' => $conversation->id,
             'sender_id' => $request->user()->id,
             'body' => $request->validated('body'),
         ]);
+        $message->save();
 
         return ApiResponse::success(new MessageResource($message), 'Message sent.', 201);
     }

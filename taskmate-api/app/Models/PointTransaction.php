@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['user_id', 'task_id', 'amount', 'type', 'note'])]
+#[Fillable(['note'])]
 class PointTransaction extends Model
 {
     /** @use HasFactory<PointTransactionFactory> */

@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-#[Fillable(['task_id', 'user_one_id', 'user_two_id'])]
+#[Fillable([])]
 class Conversation extends Model
 {
     /** @use HasFactory<ConversationFactory> */
