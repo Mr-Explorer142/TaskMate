@@ -10,6 +10,7 @@ use App\Http\Requests\UpdateTaskRequest;
 use App\Http\Resources\TaskResource;
 use App\Http\Resources\TeamMemberResource;
 use App\Models\Task;
+use App\Services\PointsService;
 use App\Support\ApiResponse;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -103,6 +104,12 @@ class TaskController extends Controller
 
             if ($task->acceptedApplications()->count() < 1) {
                 abort(422, 'Accept at least one member before starting');
+            }
+
+            if ($task->type === TaskType::Points) {
+                $required = (int) $task->reward * $task->acceptedApplications()->count();
+
+                app(PointsService::class)->escrow($task->uploader, $task, $required);
             }
 
             $task->update([

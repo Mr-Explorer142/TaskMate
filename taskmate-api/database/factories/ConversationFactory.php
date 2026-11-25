@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Conversation;
+use App\Models\Task;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -19,7 +20,7 @@ class ConversationFactory extends Factory
     public function definition(): array
     {
         return [
-            'task_id' => null,
+            'task_id' => Task::factory(),
             'user_one_id' => User::factory(),
             'user_two_id' => User::factory(),
         ];

@@ -56,7 +56,7 @@ class TaskFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'type' => TaskType::Points,
-            'reward' => 0,
+            'reward' => fake()->numberBetween(10, 100),
         ]);
     }
 

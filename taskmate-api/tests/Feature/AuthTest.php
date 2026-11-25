@@ -31,6 +31,29 @@ it('registers a user and returns a token', function () {
     ]);
 });
 
+it('grants the signup bonus and records it in the ledger', function () {
+    $response = $this->postJson('/api/v1/auth/register', [
+        'name' => 'Bonus User',
+        'email' => 'bonus@example.com',
+        'password' => 'password123',
+        'password_confirmation' => 'password123',
+    ]);
+
+    $response->assertCreated()
+        ->assertJsonPath('data.user.points_balance', (int) config('points.signup_bonus'));
+
+    $user = User::query()->where('email', 'bonus@example.com')->firstOrFail();
+
+    expect($user->pointTransactions()->sum('amount'))->toBe((int) config('points.signup_bonus'))
+        ->and($user->pointTransactions()->first()->type->value)->toBe('bonus');
+
+    $this->assertDatabaseHas('point_transactions', [
+        'user_id' => $user->id,
+        'amount' => (int) config('points.signup_bonus'),
+        'type' => 'bonus',
+    ]);
+});
+
 it('validates registration input', function () {
     $response = $this->postJson('/api/v1/auth/register', [
         'name' => '',

@@ -386,6 +386,12 @@ export function TaskForm({ task }: { task?: Task }) {
                     ? "Amount in dollars, up to 2 decimals."
                     : "Whole number of points."}
                 </FormDescription>
+                {type === "points" ? (
+                  <p className="text-xs text-muted-foreground">
+                    Reward is per member. When you start the project, reward x
+                    accepted members will be held in escrow.
+                  </p>
+                ) : null}
                 <FormMessage />
               </FormItem>
             )}

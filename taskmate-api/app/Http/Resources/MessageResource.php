@@ -19,10 +19,8 @@ class MessageResource extends JsonResource
             'conversation_id' => $this->conversation_id,
             'sender_id' => $this->sender_id,
             'body' => $this->body,
-            'read_at' => $this->read_at?->toIso8601String(),
-            'sender' => $this->whenLoaded('sender', fn () => new PublicUserResource($this->sender)),
             'created_at' => $this->created_at?->toIso8601String(),
-            'updated_at' => $this->updated_at?->toIso8601String(),
+            'read_at' => $this->read_at?->toIso8601String(),
         ];
     }
 }

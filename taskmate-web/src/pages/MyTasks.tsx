@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { usePointsStore } from "@/stores/usePointsStore"
 import { useTaskStore } from "@/stores/useTaskStore"
 import type { TaskFilters, TaskStatus } from "@/types"
 
@@ -113,6 +114,7 @@ export function MyTasksPage() {
     try {
       await startTask(id)
       toast.success("Project started.")
+      void usePointsStore.getState().fetchSummary()
     } catch (caught) {
       toast.error(getApiErrorMessage(caught))
     } finally {

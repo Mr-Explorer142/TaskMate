@@ -3,6 +3,8 @@
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\SocialAuthController;
+use App\Http\Controllers\ConversationController;
+use App\Http\Controllers\PointController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfileLinkController;
 use App\Http\Controllers\TaskController;
@@ -57,4 +59,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/applications/{application}/accept', [ApplicationController::class, 'accept']);
     Route::patch('/applications/{application}/reject', [ApplicationController::class, 'reject']);
     Route::patch('/applications/{application}/leave', [ApplicationController::class, 'leave']);
+
+    Route::get('/points', [PointController::class, 'index']);
+    Route::get('/points/transactions', [PointController::class, 'transactions']);
+
+    Route::post('/conversations', [ConversationController::class, 'store']);
+    Route::get('/conversations', [ConversationController::class, 'index']);
+    Route::get('/conversations/unread-count', [ConversationController::class, 'unreadCount']);
+    Route::get('/conversations/{conversation}/messages', [ConversationController::class, 'messages']);
+    Route::post('/conversations/{conversation}/messages', [ConversationController::class, 'sendMessage'])
+        ->middleware('throttle:60,1');
+    Route::post('/conversations/{conversation}/read', [ConversationController::class, 'markRead']);
 });

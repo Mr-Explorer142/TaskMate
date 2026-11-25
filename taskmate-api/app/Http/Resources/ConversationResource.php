@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Str;
 
 class ConversationResource extends JsonResource
 {
@@ -14,15 +15,33 @@ class ConversationResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $viewerId = $request->user()?->id;
+
+        $otherUser = null;
+
+        if ($this->relationLoaded('userOne') && $this->relationLoaded('userTwo')) {
+            $otherUser = $this->user_one_id === $viewerId ? $this->userTwo : $this->userOne;
+        }
+
         return [
             'id' => $this->id,
             'task_id' => $this->task_id,
-            'user_one_id' => $this->user_one_id,
-            'user_two_id' => $this->user_two_id,
-            'task' => $this->whenLoaded('task', fn () => new TaskResource($this->task)),
-            'user_one' => $this->whenLoaded('userOne', fn () => new PublicUserResource($this->userOne)),
-            'user_two' => $this->whenLoaded('userTwo', fn () => new PublicUserResource($this->userTwo)),
-            'messages' => MessageResource::collection($this->whenLoaded('messages')),
+            'task' => $this->whenLoaded('task', fn () => [
+                'id' => $this->task->id,
+                'title' => $this->task->title,
+            ]),
+            'other_user' => $otherUser === null ? null : [
+                'id' => $otherUser->id,
+                'name' => $otherUser->name,
+                'avatar' => $otherUser->avatar,
+            ],
+            'last_message' => $this->whenLoaded('lastMessage', fn () => $this->lastMessage === null ? null : [
+                'id' => $this->lastMessage->id,
+                'sender_id' => $this->lastMessage->sender_id,
+                'body' => Str::limit($this->lastMessage->body, 120),
+                'created_at' => $this->lastMessage->created_at?->toIso8601String(),
+            ]),
+            'unread_count' => (int) ($this->unread_count ?? 0),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

@@ -11,6 +11,7 @@ import { toast } from "sonner"
 import { getApiErrorMessage } from "@/api/client"
 import { downloadCv } from "@/api/profile"
 import { ApplicationStatusBadge } from "@/components/applications/ApplicationStatusBadge"
+import { MessageButton } from "@/components/chat/MessageButton"
 import { PlatformIcon } from "@/components/profile/PlatformIcon"
 import {
   AlertDialog,
@@ -36,6 +37,7 @@ type ConfirmAction = "accept" | "reject" | null
 
 export function ApplicantCard({
   application,
+  taskId,
   teamFull,
   locked = false,
   busy,
@@ -43,6 +45,7 @@ export function ApplicantCard({
   onReject,
 }: {
   application: Application
+  taskId: number
   teamFull: boolean
   locked?: boolean
   busy: boolean
@@ -174,6 +177,10 @@ export function ApplicantCard({
                 View profile
               </Link>
             </Button>
+          ) : null}
+
+          {applicant ? (
+            <MessageButton taskId={taskId} userId={applicant.id} label="Message" />
           ) : null}
 
           {applicant?.has_cv ? (

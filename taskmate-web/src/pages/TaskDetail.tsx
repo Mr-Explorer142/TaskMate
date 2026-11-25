@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import axios from "axios"
-import { ArrowLeft, CalendarDays, Pencil, PlayCircle, Star, Trash2, Users, XCircle } from "lucide-react"
+import { ArrowLeft, CalendarDays, Info, Pencil, PlayCircle, Star, Trash2, Users, XCircle } from "lucide-react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { toast } from "sonner"
 
@@ -8,6 +8,7 @@ import { getApiErrorMessage } from "@/api/client"
 import { getTask, getTaskTeam } from "@/api/tasks"
 import { ApplicationStatusBadge } from "@/components/applications/ApplicationStatusBadge"
 import { ApplyDialog } from "@/components/applications/ApplyDialog"
+import { MessageButton } from "@/components/chat/MessageButton"
 import { ErrorState } from "@/components/PageStates"
 import { StatusBadge } from "@/components/StatusBadge"
 import { LeaveTeamButton } from "@/components/tasks/LeaveTeamButton"
@@ -307,6 +308,16 @@ export function TaskDetailPage() {
         </div>
       </div>
 
+      {task.type === "points" ? (
+        <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+          <Info className="mt-0.5 size-4 shrink-0 text-primary" />
+          <p>
+            Reward is per member. When you start the project, reward x accepted
+            members will be held in escrow.
+          </p>
+        </div>
+      ) : null}
+
       {isInProgress ? (
         <div className="flex items-start gap-3 rounded-lg border border-status-in-progress/20 bg-status-in-progress-bg p-4 text-status-in-progress">
           <PlayCircle className="mt-0.5 size-5 shrink-0" />
@@ -404,10 +415,19 @@ export function TaskDetailPage() {
         </div>
       ) : isInProgress ? (
         task.my_application_status === "accepted" ? (
-          <ApplicationStatusBadge
-            status="accepted"
-            label="You are on this team"
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <ApplicationStatusBadge
+              status="accepted"
+              label="You are on this team"
+            />
+            {task.uploader ? (
+              <MessageButton
+                taskId={task.id}
+                userId={task.uploader.id}
+                label="Message uploader"
+              />
+            ) : null}
+          </div>
         ) : null
       ) : task.my_application_status === "pending" ? (
         <div className="flex flex-wrap items-center gap-2">
@@ -447,6 +467,13 @@ export function TaskDetailPage() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          {task.uploader ? (
+            <MessageButton
+              taskId={task.id}
+              userId={task.uploader.id}
+              label="Message uploader"
+            />
+          ) : null}
         </div>
       ) : task.my_application_status === "accepted" ? (
         <div className="flex flex-wrap items-center gap-2">
@@ -460,6 +487,13 @@ export function TaskDetailPage() {
               onConfirm={() => void handleLeave()}
             />
           ) : null}
+          {task.uploader ? (
+            <MessageButton
+              taskId={task.id}
+              userId={task.uploader.id}
+              label="Message uploader"
+            />
+          ) : null}
         </div>
       ) : task.my_application_status === "rejected" ? (
         <ApplicationStatusBadge status="rejected" label="Not selected" />
@@ -467,13 +501,22 @@ export function TaskDetailPage() {
         <ApplicationStatusBadge status="left" />
       ) : task.status === "open" ? (
         <div className="flex flex-col gap-1.5 sm:items-start">
-          <Button
-            onClick={() => setApplyOpen(true)}
-            disabled={applicationBusy}
-            className="sm:w-auto"
-          >
-            Apply to this task
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={() => setApplyOpen(true)}
+              disabled={applicationBusy}
+              className="sm:w-auto"
+            >
+              Apply to this task
+            </Button>
+            {task.uploader ? (
+              <MessageButton
+                taskId={task.id}
+                userId={task.uploader.id}
+                label="Message uploader"
+              />
+            ) : null}
+          </div>
           <p className="text-xs text-muted-foreground">
             {task.open_slots} {task.open_slots === 1 ? "slot" : "slots"} left on
             this team.

@@ -68,7 +68,13 @@ export function RegisterPage() {
         password_confirmation: values.password_confirmation,
       })
       setAuth(result.user, result.token)
-      toast.success("Account created. Welcome to TaskMate!")
+      if (result.user.points_balance > 0) {
+        toast.success(
+          `You received ${result.user.points_balance} starter points.`
+        )
+      } else {
+        toast.success("Account created. Welcome to TaskMate!")
+      }
       navigate("/profile", { replace: true })
     } catch (error) {
       const fieldErrors = getFieldErrors(error)

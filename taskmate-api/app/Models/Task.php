@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'team_size',
     'type',
     'reward',
+    'escrow_amount',
     'status',
     'started_at',
     'deadline',
@@ -41,6 +42,7 @@ class Task extends Model
             'started_at' => 'datetime',
             'deadline' => 'date',
             'reward' => 'decimal:2',
+            'escrow_amount' => 'integer',
             'skills' => 'array',
         ];
     }

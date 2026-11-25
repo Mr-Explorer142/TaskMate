@@ -184,6 +184,16 @@ DELETE /api/v1/applications/{application} # Bearer token required
 GET    /api/v1/my/applications          # Bearer token required
 PATCH  /api/v1/applications/{application}/accept  # Bearer token required (owner only)
 PATCH  /api/v1/applications/{application}/reject  # Bearer token required (owner only)
+
+GET    /api/v1/points                   # Bearer token required
+GET    /api/v1/points/transactions      # Bearer token required
+
+POST   /api/v1/conversations            # Bearer token required
+GET    /api/v1/conversations            # Bearer token required
+GET    /api/v1/conversations/unread-count  # Bearer token required
+GET    /api/v1/conversations/{conversation}/messages  # Bearer token required
+POST   /api/v1/conversations/{conversation}/messages  # Bearer token required
+POST   /api/v1/conversations/{conversation}/read      # Bearer token required
 ```
 
 Protected routes require the Sanctum Bearer token returned by register, login,
@@ -191,7 +201,9 @@ or the social auth callback. Task listing accepts spatie query parameters such
 as `filter[search]`, `filter[type]`, `filter[skill]`, `filter[min_reward]`,
 `filter[max_reward]`, `filter[has_open_slots]`, `sort`, and `page`. Application
 listings accept `filter[status]` (`pending`, `accepted`, `rejected`) with
-pagination. Messaging endpoints arrive in later phases.
+pagination. Points endpoints return the current balance, escrowed total, and a
+paginated ledger, while conversations are task-scoped and support polling with
+`before_id` / `after_id` message cursors.
 
 ---
 
@@ -210,14 +222,15 @@ The `taskmate-web/` folder contains a React single-page application that consume
 - Application flow for applicants
 - Applicant review screen for uploaders (profile, CV, links)
 - Team and slot overview
-- Messaging UI
+- Task-scoped direct messages with polling, unread badges, and mobile thread view
+- Points wallet, escrow status, and transaction history
 - Profile management (CV upload and links)
 - Review submission after project completion
 
 ### Architecture
 
 - **React** for the component-based UI
-- **Zustand** for lightweight global state (auth, tasks, applications, etc.)
+- **Zustand** for lightweight global state (auth, tasks, applications, chat, points, etc.)
 - **shadcn/ui** components styled with **Tailwind CSS**
 - API calls centralized in a service layer (for example, an Axios or fetch wrapper)
 
