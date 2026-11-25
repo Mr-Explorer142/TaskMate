@@ -19,19 +19,9 @@ import {
 } from "@/components/ui/card"
 import { EmptyState } from "@/components/PageStates"
 import { platformLabel } from "@/lib/platform"
+import { saveBlob } from "@/lib/download"
 import { getInitials } from "@/lib/utils"
 import type { PublicUser } from "@/types"
-
-function saveBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob)
-  const anchor = document.createElement("a")
-  anchor.href = url
-  anchor.download = filename
-  document.body.appendChild(anchor)
-  anchor.click()
-  anchor.remove()
-  URL.revokeObjectURL(url)
-}
 
 function Rating({ value }: { value: number | null }) {
   if (value === null || value === undefined) {

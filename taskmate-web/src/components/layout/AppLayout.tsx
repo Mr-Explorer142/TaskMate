@@ -1,6 +1,7 @@
 import { useState } from "react"
 import {
   ClipboardList,
+  FileCheck2,
   ListTodo,
   LogOut,
   Plus,
@@ -31,6 +32,7 @@ import { useAuthStore } from "@/stores/useAuthStore"
 const navigation = [
   { to: "/tasks", label: "Tasks", icon: ListTodo },
   { to: "/my-tasks", label: "My Tasks", icon: ClipboardList },
+  { to: "/my-applications", label: "My Applications", icon: FileCheck2 },
 ]
 
 export function AppLayout() {
@@ -59,17 +61,17 @@ export function AppLayout() {
       <header className="sticky top-0 z-40 border-b border-border bg-card">
         <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between gap-3 px-4">
           <Link to="/" className="flex items-center">
-            <Logo />
+            <Logo height="h-6 sm:h-8" />
           </Link>
 
-          <nav className="flex items-center gap-1">
+          <nav className="flex items-center gap-0.5 sm:gap-1">
             {navigation.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
                   [
-                    "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors",
+                    "flex items-center gap-1.5 rounded-lg px-1.5 py-1.5 text-sm font-medium transition-colors sm:px-2.5",
                     isActive
                       ? "bg-secondary text-secondary-foreground"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -84,10 +86,9 @@ export function AppLayout() {
 
           <div className="flex items-center gap-1">
             <Button asChild size="sm" className="mr-1">
-              <Link to="/tasks/new">
+              <Link to="/tasks/new" aria-label="Post a task">
                 <Plus className="size-4" />
                 <span className="hidden sm:inline">Post a task</span>
-                <span className="sm:hidden">Post</span>
               </Link>
             </Button>
 

@@ -6,6 +6,8 @@ import { toast } from "sonner"
 
 import { getApiErrorMessage } from "@/api/client"
 import { getTask } from "@/api/tasks"
+import { ApplicationStatusBadge } from "@/components/applications/ApplicationStatusBadge"
+import { ApplyDialog } from "@/components/applications/ApplyDialog"
 import { ErrorState } from "@/components/PageStates"
 import { StatusBadge } from "@/components/StatusBadge"
 import { SlotsIndicator } from "@/components/tasks/SlotsIndicator"
@@ -28,11 +30,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatDeadline, formatPostedDate, formatReward } from "@/lib/format"
 import { getInitials } from "@/lib/utils"
+import { useApplicationStore } from "@/stores/useApplicationStore"
 import { useTaskStore } from "@/stores/useTaskStore"
-import type { Task } from "@/types"
+import type { Task, TaskStatus } from "@/types"
 
-function TaskDetailSkeleton() {
-  return (
+function TaskDetailSkeleton() {  return (
     <div className="mx-auto max-w-3xl space-y-4">
       <Skeleton className="h-4 w-24" />
       <Skeleton className="h-8 w-3/4" />
@@ -46,16 +48,35 @@ function TaskDetailSkeleton() {
   )
 }
 
+function closedLabel(status: TaskStatus): string {
+  switch (status) {
+    case "full":
+      return "Team is full"
+    case "cancelled":
+      return "Task cancelled"
+    case "completed":
+      return "Task completed"
+    case "in_progress":
+      return "Task in progress"
+    default:
+      return "Applications closed"
+  }
+}
+
 export function TaskDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const cancelTask = useTaskStore((state) => state.cancelTask)
   const removeTask = useTaskStore((state) => state.removeTask)
+  const applyToTask = useApplicationStore((state) => state.apply)
+  const withdrawApplication = useApplicationStore((state) => state.withdraw)
   const [task, setTask] = useState<Task | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [notFound, setNotFound] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [applyOpen, setApplyOpen] = useState(false)
+  const [applicationBusy, setApplicationBusy] = useState(false)
 
   const loadTask = useCallback(async () => {
     if (!id) {
@@ -121,6 +142,51 @@ export function TaskDetailPage() {
     }
   }
 
+  async function handleApply(message: string | null) {
+    if (!task) {
+      return
+    }
+
+    setApplicationBusy(true)
+
+    try {
+      const application = await applyToTask(task.id, message)
+      setTask({
+        ...task,
+        my_application_id: application.id,
+        my_application_status: application.status,
+      })
+      setApplyOpen(false)
+      toast.success("Application submitted.")
+    } catch (caught) {
+      toast.error(getApiErrorMessage(caught))
+    } finally {
+      setApplicationBusy(false)
+    }
+  }
+
+  async function handleWithdraw() {
+    if (!task?.my_application_id) {
+      return
+    }
+
+    setApplicationBusy(true)
+
+    try {
+      await withdrawApplication(task.my_application_id)
+      setTask({
+        ...task,
+        my_application_id: null,
+        my_application_status: null,
+      })
+      toast.success("Application withdrawn.")
+    } catch (caught) {
+      toast.error(getApiErrorMessage(caught))
+    } finally {
+      setApplicationBusy(false)
+    }
+  }
+
   if (loading) {
     return <TaskDetailSkeleton />
   }
@@ -175,9 +241,6 @@ export function TaskDetailPage() {
         <div className="flex flex-wrap items-center gap-2">
           <TypeBadge type={task.type} />
           <StatusBadge status={task.status} />
-          {task.my_application_status ? (
-            <StatusBadge status={task.my_application_status} />
-          ) : null}
         </div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
           {task.title}
@@ -199,6 +262,16 @@ export function TaskDetailPage() {
 
       {isOwner ? (
         <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link to={`/tasks/${task.id}/applicants`}>
+              <Users className="size-4" />
+              Applicants
+              {(task.pending_count ?? 0) > 0 ? (
+                <Badge variant="secondary">{task.pending_count}</Badge>
+              ) : null}
+            </Link>
+          </Button>
+
           {canEdit ? (
             <Button variant="outline" size="sm" asChild>
               <Link to={`/tasks/${task.id}/edit`}>
@@ -268,16 +341,83 @@ export function TaskDetailPage() {
             </AlertDialog>
           ) : null}
         </div>
-      ) : (
+      ) : task.my_application_status === "pending" ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <ApplicationStatusBadge status="pending" />
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={applicationBusy}
+              >
+                Withdraw application
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Withdraw your application?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Your application will be removed. You can apply again while the
+                  task is still open.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={applicationBusy}>
+                  Keep it
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  disabled={applicationBusy}
+                  onClick={(event) => {
+                    event.preventDefault()
+                    void handleWithdraw()
+                  }}
+                >
+                  Withdraw
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      ) : task.my_application_status === "accepted" ? (
+        <ApplicationStatusBadge
+          status="accepted"
+          label="You are on this team"
+        />
+      ) : task.my_application_status === "rejected" ? (
+        <ApplicationStatusBadge status="rejected" label="Not selected" />
+      ) : task.my_application_status === "left" ? (
+        <ApplicationStatusBadge status="left" />
+      ) : task.status === "open" ? (
         <div className="flex flex-col gap-1.5 sm:items-start">
-          <Button disabled className="sm:w-auto">
+          <Button
+            onClick={() => setApplyOpen(true)}
+            disabled={applicationBusy}
+            className="sm:w-auto"
+          >
             Apply to this task
           </Button>
           <p className="text-xs text-muted-foreground">
-            Applications open on Day 3.
+            {task.open_slots} {task.open_slots === 1 ? "slot" : "slots"} left on
+            this team.
           </p>
         </div>
+      ) : (
+        <div className="flex flex-col gap-1.5 sm:items-start">
+          <Button disabled className="sm:w-auto">
+            {closedLabel(task.status)}
+          </Button>
+        </div>
       )}
+
+      <ApplyDialog
+        open={applyOpen}
+        onOpenChange={setApplyOpen}
+        taskTitle={task.title}
+        submitting={applicationBusy}
+        onSubmit={(message) => void handleApply(message)}
+      />
 
       <Card>
         <CardHeader>

@@ -177,13 +177,21 @@ PUT    /api/v1/tasks/{task}             # Bearer token required
 PATCH  /api/v1/tasks/{task}/cancel      # Bearer token required
 DELETE /api/v1/tasks/{task}             # Bearer token required
 GET    /api/v1/my/tasks                 # Bearer token required
+
+POST   /api/v1/tasks/{task}/apply       # Bearer token required
+GET    /api/v1/tasks/{task}/applications  # Bearer token required (owner only)
+DELETE /api/v1/applications/{application} # Bearer token required
+GET    /api/v1/my/applications          # Bearer token required
+PATCH  /api/v1/applications/{application}/accept  # Bearer token required (owner only)
+PATCH  /api/v1/applications/{application}/reject  # Bearer token required (owner only)
 ```
 
 Protected routes require the Sanctum Bearer token returned by register, login,
 or the social auth callback. Task listing accepts spatie query parameters such
 as `filter[search]`, `filter[type]`, `filter[skill]`, `filter[min_reward]`,
 `filter[max_reward]`, `filter[has_open_slots]`, `sort`, and `page`. Application
-and messaging endpoints arrive in later phases.
+listings accept `filter[status]` (`pending`, `accepted`, `rejected`) with
+pagination. Messaging endpoints arrive in later phases.
 
 ---
 
@@ -366,8 +374,8 @@ npm run test
 - [x] Authentication and user profiles
 - [x] CV upload and profile links
 - [x] Task CRUD and browsing
-- [ ] Applications and accept / reject flow
-- [ ] Team slot management
+- [x] Applications and accept / reject flow
+- [x] Team slot management
 - [ ] Direct messaging
 - [x] Paid / points-exchange options
 - [ ] Reviews

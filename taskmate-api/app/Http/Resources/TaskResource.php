@@ -39,6 +39,10 @@ class TaskResource extends JsonResource
                 'average_rating' => $this->uploader->average_rating,
             ]),
             'is_owner' => $isOwner,
+            'pending_count' => $this->when($isOwner, fn () => (int) ($this->pending_applications_count ?? 0)),
+            'my_application_id' => $this->relationLoaded('applications')
+                ? $this->applications->first()?->id
+                : null,
             'my_application_status' => $this->relationLoaded('applications')
                 ? $this->applications->first()?->status?->value
                 : null,

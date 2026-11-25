@@ -8,10 +8,12 @@ import { AuthCallbackPage } from "@/pages/AuthCallback"
 import { CreateTaskPage } from "@/pages/CreateTask"
 import { EditTaskPage } from "@/pages/EditTask"
 import { LoginPage } from "@/pages/Login"
+import { MyApplicationsPage } from "@/pages/MyApplications"
 import { MyTasksPage } from "@/pages/MyTasks"
 import { NotFoundPage } from "@/pages/NotFound"
 import { ProfilePage } from "@/pages/Profile"
 import { RegisterPage } from "@/pages/Register"
+import { TaskApplicantsPage } from "@/pages/TaskApplicants"
 import { TaskDetailPage } from "@/pages/TaskDetail"
 import { TasksPage } from "@/pages/Tasks"
 import { UserProfilePage } from "@/pages/UserProfile"
@@ -48,7 +50,9 @@ function App() {
               <Route path="/tasks/new" element={<CreateTaskPage />} />
               <Route path="/tasks/:id" element={<TaskDetailPage />} />
               <Route path="/tasks/:id/edit" element={<EditTaskPage />} />
+              <Route path="/tasks/:id/applicants" element={<TaskApplicantsPage />} />
               <Route path="/my-tasks" element={<MyTasksPage />} />
+              <Route path="/my-applications" element={<MyApplicationsPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/users/:id" element={<UserProfilePage />} />
             </Route>

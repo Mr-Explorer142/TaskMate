@@ -13,6 +13,8 @@ use App\Models\ProfileLink;
 use App\Models\Review;
 use App\Models\Task;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -190,5 +192,114 @@ class DatabaseSeeder extends Seeder
                 }
             }
         }
+
+        $this->seedDemoApplications($demo, $users);
+        $this->normalizeFullTeams();
+    }
+
+    /**
+     * Give the demo user applications in every reviewable state and make sure
+     * one of the demo user's own tasks has pending applicants.
+     *
+     * @param  Collection<int, User>  $users
+     */
+    private function seedDemoApplications(User $demo, Collection $users): void
+    {
+        $usedTaskIds = [];
+
+        $ensureApplication = function (ApplicationStatus $status) use ($demo, $users, &$usedTaskIds): void {
+            $task = Task::query()
+                ->where('uploader_id', '!=', $demo->id)
+                ->where('status', TaskStatus::Open)
+                ->whereNotIn('id', $usedTaskIds)
+                ->whereDoesntHave('applications', fn (Builder $query) => $query->where('user_id', $demo->id))
+                ->whereRaw(
+                    '(select count(*) from applications where applications.task_id = tasks.id and applications.status = ?) < tasks.team_size',
+                    [ApplicationStatus::Accepted->value],
+                )
+                ->orderBy('id')
+                ->first();
+
+            if ($task === null) {
+                $task = Task::factory()->open()->create([
+                    'uploader_id' => $users->first()->id,
+                    'team_size' => 3,
+                ]);
+            }
+
+            $usedTaskIds[] = $task->id;
+
+            $factory = match ($status) {
+                ApplicationStatus::Accepted => Application::factory()->accepted(),
+                ApplicationStatus::Rejected => Application::factory()->rejected(),
+                default => Application::factory(),
+            };
+
+            $factory->create([
+                'task_id' => $task->id,
+                'user_id' => $demo->id,
+            ]);
+
+            if ($status === ApplicationStatus::Accepted) {
+                $accepted = $task->acceptedApplications()->count();
+
+                if ($accepted >= $task->team_size) {
+                    $task->update(['status' => TaskStatus::Full]);
+                }
+            }
+        };
+
+        $ensureApplication(ApplicationStatus::Pending);
+        $ensureApplication(ApplicationStatus::Accepted);
+        $ensureApplication(ApplicationStatus::Rejected);
+
+        $demoTask = Task::query()
+            ->where('uploader_id', $demo->id)
+            ->where('status', TaskStatus::Open)
+            ->withCount([
+                'applications as pending_applications_count' => fn (Builder $query) => $query
+                    ->where('status', ApplicationStatus::Pending->value),
+            ])
+            ->first();
+
+        if ($demoTask === null) {
+            $demoTask = Task::factory()->open()->create([
+                'uploader_id' => $demo->id,
+                'team_size' => 3,
+            ]);
+        }
+
+        if (($demoTask->pending_applications_count ?? 0) === 0) {
+            $applicant = $users->first(
+                fn (User $user) => $user->id !== $demo->id
+                    && ! $demoTask->applications()->where('user_id', $user->id)->exists(),
+            );
+
+            if ($applicant !== null) {
+                Application::factory()->create([
+                    'task_id' => $demoTask->id,
+                    'user_id' => $applicant->id,
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Keep the task status in sync with the accepted team size.
+     */
+    private function normalizeFullTeams(): void
+    {
+        Task::query()
+            ->where('status', TaskStatus::Open)
+            ->withCount([
+                'applications as accepted_applications_count' => fn (Builder $query) => $query
+                    ->where('status', ApplicationStatus::Accepted->value),
+            ])
+            ->get()
+            ->each(function (Task $task): void {
+                if ($task->accepted_applications_count >= $task->team_size) {
+                    $task->update(['status' => TaskStatus::Full]);
+                }
+            });
     }
 }
