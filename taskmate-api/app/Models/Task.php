@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'escrow_amount',
     'status',
     'started_at',
+    'completed_at',
     'deadline',
     'skills',
 ])]
@@ -40,6 +41,7 @@ class Task extends Model
             'type' => TaskType::class,
             'status' => TaskStatus::class,
             'started_at' => 'datetime',
+            'completed_at' => 'datetime',
             'deadline' => 'date',
             'reward' => 'decimal:2',
             'escrow_amount' => 'integer',

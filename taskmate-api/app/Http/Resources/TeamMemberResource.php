@@ -21,6 +21,7 @@ class TeamMemberResource extends JsonResource
             'bio' => $this->user->bio,
             'skills' => $this->user->skills ?? [],
             'average_rating' => $this->user->average_rating,
+            'reviews_count' => (int) ($this->user->reviews_received_count ?? 0),
             'accepted_at' => $this->accepted_at?->toIso8601String(),
         ];
     }

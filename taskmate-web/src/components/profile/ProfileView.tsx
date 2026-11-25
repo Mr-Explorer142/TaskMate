@@ -7,6 +7,7 @@ import { getApiErrorMessage } from "@/api/client"
 import { downloadCv } from "@/api/profile"
 import { CountryFlag } from "@/components/CountryFlag"
 import { PlatformIcon } from "@/components/profile/PlatformIcon"
+import { ReviewsReceived } from "@/components/reviews/ReviewsReceived"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -18,39 +19,11 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { EmptyState } from "@/components/PageStates"
+import { formatRatingLabel } from "@/lib/format"
 import { platformLabel } from "@/lib/platform"
 import { saveBlob } from "@/lib/download"
 import { getInitials } from "@/lib/utils"
 import type { PublicUser } from "@/types"
-
-function Rating({ value }: { value: number | null }) {
-  if (value === null || value === undefined) {
-    return <p className="text-sm text-muted-foreground">No reviews yet</p>
-  }
-
-  const rounded = Math.round(value)
-
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex items-center gap-0.5" aria-hidden="true">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            className={
-              star <= rounded
-                ? "size-4 fill-status-pending text-status-pending"
-                : "size-4 text-border"
-            }
-          />
-        ))}
-      </div>
-      <span className="text-sm font-medium text-foreground">
-        {value.toFixed(1)}
-      </span>
-      <span className="text-sm text-muted-foreground">average rating</span>
-    </div>
-  )
-}
 
 export function ProfileView({ user }: { user: PublicUser }) {
   const [downloading, setDownloading] = useState(false)
@@ -87,14 +60,16 @@ export function ProfileView({ user }: { user: PublicUser }) {
                 <h1 className="text-2xl font-semibold tracking-tight text-foreground">
                   {user.name}
                 </h1>
+                <span className="flex items-center gap-1 text-sm font-medium text-foreground">
+                  <Star className="size-3.5 fill-primary text-primary" />
+                  {formatRatingLabel(user.average_rating, user.reviews_count)}
+                </span>
                 <CountryFlag code={user.country} showName className="text-sm text-muted-foreground" />
               </div>
               <p className="text-sm text-muted-foreground">
                 Member since {format(new Date(user.created_at), "MMMM yyyy")}
               </p>
             </div>
-
-            <Rating value={user.average_rating} />
 
             {user.bio ? (
               <p className="max-w-2xl whitespace-pre-line text-sm text-muted-foreground">
@@ -181,6 +156,8 @@ export function ProfileView({ user }: { user: PublicUser }) {
           </CardContent>
         </Card>
       </div>
+
+      <ReviewsReceived userId={user.id} />
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { create } from "zustand"
 import { getApiErrorMessage } from "@/api/client"
 import {
   cancelTask as cancelTaskRequest,
+  completeTask as completeTaskRequest,
   createTask as createTaskRequest,
   deleteTask as deleteTaskRequest,
   listTasks,
@@ -29,6 +30,7 @@ interface TaskState {
   createTask: (payload: TaskPayload) => Promise<Task>
   updateTask: (id: number, payload: Partial<TaskPayload>) => Promise<Task>
   cancelTask: (id: number) => Promise<Task>
+  completeTask: (id: number) => Promise<Task>
   startTask: (id: number) => Promise<Task>
   removeTask: (id: number) => Promise<void>
 }
@@ -108,6 +110,12 @@ export const useTaskStore = create<TaskState>((set) => {
 
     async cancelTask(id) {
       const task = await cancelTaskRequest(id)
+      replaceTask(task)
+      return task
+    },
+
+    async completeTask(id) {
+      const task = await completeTaskRequest(id)
       replaceTask(task)
       return task
     },

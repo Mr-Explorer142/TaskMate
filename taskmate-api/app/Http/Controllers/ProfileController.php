@@ -26,6 +26,7 @@ class ProfileController extends Controller
 
         $user = $user->fresh()->load('profileLinks');
         $user->loadAvg('reviewsReceived', 'rating');
+        $user->loadCount('reviewsReceived');
 
         return ApiResponse::success(new UserResource($user), 'Profile updated.');
     }
@@ -37,6 +38,7 @@ class ProfileController extends Controller
     {
         $user->load('profileLinks');
         $user->loadAvg('reviewsReceived', 'rating');
+        $user->loadCount('reviewsReceived');
 
         return ApiResponse::success(new PublicUserResource($user), 'User profile.');
     }
@@ -69,6 +71,8 @@ class ProfileController extends Controller
         }
 
         $user = $user->fresh()->load('profileLinks');
+        $user->loadAvg('reviewsReceived', 'rating');
+        $user->loadCount('reviewsReceived');
 
         return ApiResponse::success(new UserResource($user), 'CV uploaded.');
     }
@@ -107,6 +111,8 @@ class ProfileController extends Controller
         ]);
 
         $user = $user->fresh()->load('profileLinks');
+        $user->loadAvg('reviewsReceived', 'rating');
+        $user->loadCount('reviewsReceived');
 
         return ApiResponse::success(new UserResource($user), 'CV deleted.');
     }

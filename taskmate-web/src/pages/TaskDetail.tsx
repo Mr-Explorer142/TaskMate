@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import axios from "axios"
-import { ArrowLeft, CalendarDays, Info, Pencil, PlayCircle, Star, Trash2, Users, XCircle } from "lucide-react"
+import { ArrowLeft, CalendarDays, CheckCircle2, Info, Pencil, PlayCircle, Star, Trash2, Users, XCircle } from "lucide-react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { toast } from "sonner"
 
@@ -10,7 +10,9 @@ import { ApplicationStatusBadge } from "@/components/applications/ApplicationSta
 import { ApplyDialog } from "@/components/applications/ApplyDialog"
 import { MessageButton } from "@/components/chat/MessageButton"
 import { ErrorState } from "@/components/PageStates"
+import { PendingReviews } from "@/components/reviews/PendingReviews"
 import { StatusBadge } from "@/components/StatusBadge"
+import { CompleteProjectDialog } from "@/components/tasks/CompleteProjectDialog"
 import { LeaveTeamButton } from "@/components/tasks/LeaveTeamButton"
 import { SlotsIndicator } from "@/components/tasks/SlotsIndicator"
 import { TeamRoster } from "@/components/tasks/TeamRoster"
@@ -31,9 +33,15 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { formatDeadline, formatPostedDate, formatReward } from "@/lib/format"
+import {
+  formatDeadline,
+  formatPostedDate,
+  formatRatingLabel,
+  formatReward,
+} from "@/lib/format"
 import { getInitials } from "@/lib/utils"
 import { useApplicationStore } from "@/stores/useApplicationStore"
+import { usePointsStore } from "@/stores/usePointsStore"
 import { useTaskStore } from "@/stores/useTaskStore"
 import type { Task, TaskStatus, Team } from "@/types"
 
@@ -70,6 +78,7 @@ export function TaskDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const cancelTask = useTaskStore((state) => state.cancelTask)
+  const completeTask = useTaskStore((state) => state.completeTask)
   const removeTask = useTaskStore((state) => state.removeTask)
   const applyToTask = useApplicationStore((state) => state.apply)
   const withdrawApplication = useApplicationStore((state) => state.withdraw)
@@ -147,11 +156,42 @@ export function TaskDetailPage() {
       const updated = await cancelTask(task.id)
       setTask(updated)
       toast.success("Task cancelled.")
+      void usePointsStore.getState().fetchSummary()
     } catch (caught) {
       toast.error(getApiErrorMessage(caught))
     } finally {
       setBusy(false)
     }
+  }
+
+  async function handleComplete() {
+    if (!task) {
+      return
+    }
+
+    setBusy(true)
+
+    try {
+      const updated = await completeTask(task.id)
+      setTask(updated)
+      toast.success("Project completed.")
+      void usePointsStore.getState().fetchSummary()
+    } catch (caught) {
+      toast.error(getApiErrorMessage(caught))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  function handleReviewed() {
+    setTask((current) =>
+      current
+        ? {
+            ...current,
+            pending_reviews_count: Math.max(0, current.pending_reviews_count - 1),
+          }
+        : current
+    )
   }
 
   async function handleDelete() {
@@ -268,13 +308,18 @@ export function TaskDetailPage() {
 
   const isOwner = task.is_owner
   const isInProgress = task.status === "in_progress"
+  const isCompleted = task.status === "completed"
   const canEdit = isOwner && (task.status === "open" || task.status === "full")
-  const canCancel = canEdit
+  const canCancel =
+    isOwner &&
+    (task.status === "open" || task.status === "full" || isInProgress)
   const canDelete = isOwner && (task.status === "open" || task.status === "cancelled")
-  const rating =
-    task.uploader?.average_rating != null
-      ? Number(task.uploader.average_rating).toFixed(1)
-      : null
+  const rating = task.uploader
+    ? formatRatingLabel(
+        task.uploader.average_rating,
+        task.uploader.reviews_count
+      )
+    : null
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -332,6 +377,23 @@ export function TaskDetailPage() {
         </div>
       ) : null}
 
+      {isCompleted ? (
+        <div className="flex items-start gap-3 rounded-lg border border-status-open/20 bg-status-open-bg p-4 text-status-open">
+          <CheckCircle2 className="mt-0.5 size-5 shrink-0" />
+          <div className="space-y-0.5">
+            <p className="text-sm font-semibold">Project completed</p>
+            <p className="text-sm">
+              {task.completed_at
+                ? `Finished on ${formatPostedDate(task.completed_at)}.`
+                : "The team is now closed."}
+              {task.is_participant && task.pending_reviews_count > 0
+                ? ` ${task.pending_reviews_count} review${task.pending_reviews_count === 1 ? "" : "s"} left to submit.`
+                : ""}
+            </p>
+          </div>
+        </div>
+      ) : null}
+
       {isOwner ? (
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" asChild>
@@ -353,19 +415,30 @@ export function TaskDetailPage() {
             </Button>
           ) : null}
 
-          {canCancel ? (
+          {task.can_complete ? (
+            <CompleteProjectDialog
+              task={task}
+              busy={busy}
+              onConfirm={() => void handleComplete()}
+              onCancel={() => void handleCancel()}
+            />
+          ) : null}
+
+          {canCancel && !task.can_complete ? (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="outline" size="sm" disabled={busy}>
                   <XCircle className="size-4" />
-                  Cancel task
+                  Cancel project
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Cancel this task?</AlertDialogTitle>
+                  <AlertDialogTitle>Cancel this project?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Pending applications will be rejected. This cannot be undone.
+                    {isInProgress
+                      ? "Escrowed points will be refunded to you and members get nothing. This cannot be undone."
+                      : "Pending applications will be rejected. This cannot be undone."}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -375,7 +448,7 @@ export function TaskDetailPage() {
                       void handleCancel()
                     }}
                   >
-                    Cancel task
+                    Cancel project
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -429,6 +502,30 @@ export function TaskDetailPage() {
             ) : null}
           </div>
         ) : null
+      ) : isCompleted && task.is_participant ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <ApplicationStatusBadge
+            status="accepted"
+            label="You were on this team"
+          />
+          {task.uploader ? (
+            <MessageButton
+              taskId={task.id}
+              userId={task.uploader.id}
+              label="Message uploader"
+            />
+          ) : null}
+          {task.pending_reviews_count > 0 ? (
+            <span className="text-xs text-muted-foreground">
+              {task.pending_reviews_count} review
+              {task.pending_reviews_count === 1 ? "" : "s"} left to submit below.
+            </span>
+          ) : null}
+        </div>
+      ) : isCompleted ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusBadge status="completed" />
+        </div>
       ) : task.my_application_status === "pending" ? (
         <div className="flex flex-wrap items-center gap-2">
           <ApplicationStatusBadge status="pending" />
@@ -579,6 +676,10 @@ export function TaskDetailPage() {
         onRetry={() => void loadTeam()}
       />
 
+      {isCompleted && task.is_participant ? (
+        <PendingReviews taskId={task.id} onReviewed={handleReviewed} />
+      ) : null}
+
       {task.uploader ? (
         <Card>
           <CardHeader>
@@ -602,8 +703,8 @@ export function TaskDetailPage() {
                   {task.uploader.name}
                 </p>
                 <p className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Star className="size-3.5 fill-amber-400 text-amber-400" />
-                  {rating ? `${rating} rating` : "No ratings yet"}
+                  <Star className="size-3.5 fill-primary text-primary" />
+                  {rating}
                 </p>
               </div>
             </Link>

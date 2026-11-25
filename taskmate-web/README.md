@@ -3,7 +3,8 @@
 The React frontend for TaskMate - a task marketplace where people find teammates
 for real work. Day 1 covers authentication and public/private profiles; Day 2
 adds task browsing, creation, editing, and owner management. Day 5 adds
-task-scoped direct messages and the points wallet.
+task-scoped direct messages and the points wallet. Day 6 adds project
+completion, escrow settlement, peer reviews, and rating summaries.
 
 ## Stack
 
@@ -124,6 +125,37 @@ The seeded database also contains other members to visit via
   balance is too low, links to `/points`, and refreshes the balance after a
   successful start.
 
+- **Completion and reviews** - owners can complete an in-progress project; the
+  dialog explains points released per member, the total escrow, or that payment
+  is handled outside TaskMate. It also offers a secondary Cancel project action
+  with a stronger escrow-refund warning. Completed tasks show a green completion
+  banner and hide apply, leave, edit, start, and cancel actions. Participants
+  review the rest of the team with a keyboard-accessible 1–5 star input and an
+  optional comment; the pending list shrinks after each submission and 409/422
+  errors appear as toasts. My Tasks and My Applications link to unfinished
+  reviews, and the points balance refreshes after settlement.
+- **Ratings** - profiles show an average, review count, and a flat distribution
+  summary, followed by paginated review cards with reviewer, stars, comment,
+  task link, and date. Task cards, applicant cards, team rosters, and task
+  detail show `4.6 (12)` style ratings or `New` when there are no reviews.
+
+## Day 6 API endpoints
+
+All endpoints use `Authorization: Bearer <token>` and the `/api/v1` prefix.
+
+```text
+PATCH /tasks/{task}/complete
+GET  /tasks/{task}/reviews/pending
+POST /tasks/{task}/reviews          { "reviewee_id": 3, "rating": 5, "comment": "Great work" }
+GET  /users/{user}/reviews?page=1
+```
+
+Completing a points task releases escrow to every accepted member and refunds
+any remainder; paid tasks create no point transactions. Cancelling an
+in-progress points task refunds the full escrow to the owner and pays members
+nothing. No new frontend routes were added: these flows live on task detail,
+My Tasks, My Applications, and profiles.
+
 ## Routes
 
 | Route | Access | Page |
@@ -159,14 +191,15 @@ npm run lint     # oxlint
 
 ```
 src/
-  api/            axios client and endpoint wrappers (auth, tasks, messages, points)
+  api/            axios client and endpoint wrappers (auth, tasks, messages, points, reviews)
   components/
     applications/ application dialog, applicant card, row, status badge
     chat/         conversation list/item, thread, bubbles, input, message button
     layout/       app shell and auth shell
     points/       balance badge and transaction row
     profile/      profile cards, link editor, public profile view
-    tasks/        task cards, filters, form, badges, pagination
+    reviews/      star rating/input, review dialog/card, rating summary, pending reviews
+    tasks/        task cards, filters, form, badges, pagination, completion dialog
     ui/           shadcn/ui components
   hooks/          useDebounce, usePolling
   lib/            utilities, formatting, and platform detection

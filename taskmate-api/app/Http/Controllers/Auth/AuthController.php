@@ -37,6 +37,8 @@ class AuthController extends Controller
         );
         $this->sendVerificationCode($user);
         $user->load('profileLinks');
+        $user->loadAvg('reviewsReceived', 'rating');
+        $user->loadCount('reviewsReceived');
 
         $token = $user->createToken('auth-token')->plainTextToken;
 
@@ -63,6 +65,7 @@ class AuthController extends Controller
 
         $user->load('profileLinks');
         $user->loadAvg('reviewsReceived', 'rating');
+        $user->loadCount('reviewsReceived');
 
         $token = $user->createToken('auth-token')->plainTextToken;
 
@@ -100,6 +103,7 @@ class AuthController extends Controller
 
         $user->load('profileLinks');
         $user->loadAvg('reviewsReceived', 'rating');
+        $user->loadCount('reviewsReceived');
 
         return ApiResponse::success(new UserResource($user), 'Email verified successfully.');
     }
@@ -112,6 +116,10 @@ class AuthController extends Controller
         $user = $request->user();
 
         if ($user->email_verified_at !== null) {
+            $user->load('profileLinks');
+            $user->loadAvg('reviewsReceived', 'rating');
+            $user->loadCount('reviewsReceived');
+
             return ApiResponse::success(new UserResource($user), 'Your email is already verified.');
         }
 
@@ -142,6 +150,7 @@ class AuthController extends Controller
         $user = $request->user();
         $user->load('profileLinks');
         $user->loadAvg('reviewsReceived', 'rating');
+        $user->loadCount('reviewsReceived');
 
         return ApiResponse::success(new UserResource($user), 'Authenticated user.');
     }

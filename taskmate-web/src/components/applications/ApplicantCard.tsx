@@ -27,7 +27,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { formatPostedDate } from "@/lib/format"
+import { formatPostedDate, formatRatingLabel } from "@/lib/format"
 import { saveBlob } from "@/lib/download"
 import { platformLabel } from "@/lib/platform"
 import { getInitials } from "@/lib/utils"
@@ -108,10 +108,11 @@ export function ApplicantCard({
                 <ApplicationStatusBadge status={application.status} />
               </div>
               <p className="flex items-center gap-1 text-sm text-muted-foreground">
-                <Star className="size-3.5 fill-status-pending text-status-pending" />
-                {applicant?.average_rating != null
-                  ? `${Number(applicant.average_rating).toFixed(1)} rating`
-                  : "No ratings yet"}
+                <Star className="size-3.5 fill-primary text-primary" />
+                {formatRatingLabel(
+                  applicant?.average_rating,
+                  applicant?.reviews_count
+                )}
               </p>
               <p className="text-xs text-muted-foreground">
                 Applied {formatPostedDate(application.created_at)}

@@ -22,6 +22,7 @@ class PublicUserResource extends JsonResource
             'skills' => $this->skills ?? [],
             'avatar' => $this->avatar,
             'average_rating' => $this->average_rating,
+            'reviews_count' => (int) ($this->reviews_received_count ?? 0),
             'has_cv' => $this->has_cv,
             'profile_links' => ProfileLinkResource::collection($this->whenLoaded('profileLinks')),
             'created_at' => $this->created_at?->toIso8601String(),

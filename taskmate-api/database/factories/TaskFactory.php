@@ -39,6 +39,7 @@ class TaskFactory extends Factory
             'reward' => fake()->randomFloat(2, 0, 500),
             'status' => TaskStatus::Open,
             'started_at' => null,
+            'completed_at' => null,
             'deadline' => fake()->dateTimeBetween('+1 week', '+2 months'),
             'skills' => fake()->randomElements(self::SKILLS, fake()->numberBetween(2, 5)),
         ];
@@ -86,7 +87,8 @@ class TaskFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => TaskStatus::Completed,
-            'started_at' => now(),
+            'started_at' => now()->subDay(),
+            'completed_at' => now(),
         ]);
     }
 

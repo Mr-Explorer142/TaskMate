@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import { Star } from "lucide-react"
 import { Link } from "react-router-dom"
 
 import { StatusBadge } from "@/components/StatusBadge"
@@ -7,7 +8,7 @@ import { TypeBadge } from "@/components/tasks/TypeBadge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { formatDeadline, formatReward } from "@/lib/format"
+import { formatDeadline, formatRatingLabel, formatReward } from "@/lib/format"
 import { getInitials } from "@/lib/utils"
 import type { Task } from "@/types"
 
@@ -43,7 +44,7 @@ export function TaskCard({
           >
             {task.title}
           </Link>
-          <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
             <Avatar className="size-5">
               {task.uploader?.avatar ? (
                 <AvatarImage src={task.uploader.avatar} alt={task.uploader.name} />
@@ -55,6 +56,15 @@ export function TaskCard({
             <span className="truncate">
               {task.uploader?.name ?? "TaskMate member"}
             </span>
+            {task.uploader ? (
+              <span className="flex items-center gap-1">
+                <Star className="size-3 fill-primary text-primary" />
+                {formatRatingLabel(
+                  task.uploader.average_rating,
+                  task.uploader.reviews_count
+                )}
+              </span>
+            ) : null}
           </div>
         </div>
 

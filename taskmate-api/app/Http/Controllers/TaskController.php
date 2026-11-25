@@ -69,7 +69,8 @@ class TaskController extends Controller
             ->with([
                 'user' => fn (BelongsTo $query) => $query
                     ->select(['id', 'name', 'avatar', 'bio', 'skills'])
-                    ->withAvg('reviewsReceived', 'rating'),
+                    ->withAvg('reviewsReceived', 'rating')
+                    ->withCount('reviewsReceived'),
             ])
             ->orderBy('accepted_at')
             ->get();
@@ -127,6 +128,47 @@ class TaskController extends Controller
         $task = $this->loadRelations($task->fresh(), $request);
 
         return ApiResponse::success(new TaskResource($task), 'Project started.');
+    }
+
+    /**
+     * Complete a started task and release its escrowed points.
+     */
+    public function complete(Request $request, Task $task): JsonResponse
+    {
+        Gate::authorize('complete', $task);
+
+        $task = DB::transaction(function () use ($task): Task {
+            $task = Task::query()
+                ->whereKey($task->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($task->status !== TaskStatus::InProgress) {
+                abort(409, 'Only in-progress tasks can be completed.');
+            }
+
+            if ($task->type === TaskType::Points) {
+                $points = app(PointsService::class);
+                $reward = (int) $task->reward;
+
+                foreach ($task->acceptedApplications()->with('user')->get() as $application) {
+                    $points->release($task, $application->user, $reward);
+                }
+
+                $points->refund($task);
+            }
+
+            $task->update([
+                'status' => TaskStatus::Completed,
+                'completed_at' => now(),
+            ]);
+
+            return $task;
+        });
+
+        $task = $this->loadRelations($task->fresh(), $request);
+
+        return ApiResponse::success(new TaskResource($task), 'Project completed.');
     }
 
     /**
@@ -211,9 +253,18 @@ class TaskController extends Controller
         Gate::authorize('cancel', $task);
 
         DB::transaction(function () use ($task): void {
-            $task->refresh();
+            $task = Task::query()
+                ->whereKey($task->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-            if (! in_array($task->status, [TaskStatus::Open, TaskStatus::Full], true)) {
+            if ($task->status === TaskStatus::Completed) {
+                abort(409, 'Completed tasks cannot be cancelled.');
+            }
+
+            if ($task->status === TaskStatus::InProgress) {
+                app(PointsService::class)->refund($task);
+            } elseif (! in_array($task->status, [TaskStatus::Open, TaskStatus::Full], true)) {
                 throw ValidationException::withMessages([
                     'status' => 'Only open or full tasks can be cancelled.',
                 ]);
@@ -326,7 +377,9 @@ class TaskController extends Controller
 
         return $query
             ->with([
-                'uploader' => fn (BelongsTo $query) => $query->withAvg('reviewsReceived', 'rating'),
+                'uploader' => fn (BelongsTo $query) => $query
+                    ->withAvg('reviewsReceived', 'rating')
+                    ->withCount('reviewsReceived'),
                 'applications' => fn (HasMany $query) => $query->where('user_id', $request->user()->id),
             ])
             ->withCount([
@@ -335,6 +388,8 @@ class TaskController extends Controller
                     ->where('status', ApplicationStatus::Accepted->value),
                 'applications as pending_applications_count' => fn (Builder $query) => $query
                     ->where('status', ApplicationStatus::Pending->value),
+                'reviews as my_reviews_count' => fn (Builder $query) => $query
+                    ->where('reviewer_id', $request->user()->id),
             ]);
     }
 
@@ -344,7 +399,9 @@ class TaskController extends Controller
     private function loadRelations(Task $task, Request $request): Task
     {
         return $task->load([
-            'uploader' => fn (BelongsTo $query) => $query->withAvg('reviewsReceived', 'rating'),
+            'uploader' => fn (BelongsTo $query) => $query
+                ->withAvg('reviewsReceived', 'rating')
+                ->withCount('reviewsReceived'),
             'applications' => fn (HasMany $query) => $query->where('user_id', $request->user()->id),
         ])->loadCount([
             'applications',
@@ -352,6 +409,8 @@ class TaskController extends Controller
                 ->where('status', ApplicationStatus::Accepted->value),
             'applications as pending_applications_count' => fn (Builder $query) => $query
                 ->where('status', ApplicationStatus::Pending->value),
+            'reviews as my_reviews_count' => fn (Builder $query) => $query
+                ->where('reviewer_id', $request->user()->id),
         ]);
     }
 

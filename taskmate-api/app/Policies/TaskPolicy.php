@@ -40,6 +40,14 @@ class TaskPolicy
     }
 
     /**
+     * Determine whether the user can complete the task.
+     */
+    public function complete(User $user, Task $task): bool
+    {
+        return $user->id === $task->uploader_id;
+    }
+
+    /**
      * Determine whether the user can cancel the task.
      */
     public function cancel(User $user, Task $task): bool
