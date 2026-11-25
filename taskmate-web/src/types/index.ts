@@ -79,12 +79,15 @@ export interface Task {
   type: TaskType
   reward: string
   status: TaskStatus
+  started_at: string | null
   deadline: string | null
   skills: string[]
   created_at: string
   accepted_count: number
   open_slots: number
   is_full: boolean
+  can_start: boolean
+  can_leave: boolean
   applications_count?: number
   pending_count?: number
   uploader?: TaskUploader
@@ -166,8 +169,30 @@ export interface Application {
   message: string | null
   created_at: string
   accepted_at: string | null
+  left_at: string | null
   applicant?: ApplicationApplicant
   task?: ApplicationTaskSummary
+}
+
+export interface TeamMember {
+  id: number
+  name: string
+  avatar: string | null
+  bio: string | null
+  skills: string[]
+  average_rating: number | null
+  accepted_at: string
+}
+
+export interface TeamMeta {
+  team_size: number
+  accepted_count: number
+  open_slots: number
+}
+
+export interface Team {
+  members: TeamMember[]
+  meta: TeamMeta
 }
 
 export interface ApiEnvelope<T> {

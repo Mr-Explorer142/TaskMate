@@ -38,6 +38,7 @@ class TaskFactory extends Factory
             'type' => fake()->randomElement([TaskType::Paid, TaskType::Points]),
             'reward' => fake()->randomFloat(2, 0, 500),
             'status' => TaskStatus::Open,
+            'started_at' => null,
             'deadline' => fake()->dateTimeBetween('+1 week', '+2 months'),
             'skills' => fake()->randomElements(self::SKILLS, fake()->numberBetween(2, 5)),
         ];
@@ -77,6 +78,7 @@ class TaskFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => TaskStatus::InProgress,
+            'started_at' => now(),
         ]);
     }
 
@@ -84,6 +86,7 @@ class TaskFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => TaskStatus::Completed,
+            'started_at' => now(),
         ]);
     }
 

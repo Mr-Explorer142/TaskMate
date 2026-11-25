@@ -39,4 +39,12 @@ class ApplicationPolicy
     {
         return $user->id === $application->user_id;
     }
+
+    /**
+     * Determine whether the user can leave the task team.
+     */
+    public function leave(User $user, Application $application): bool
+    {
+        return $user->id === $application->user_id;
+    }
 }

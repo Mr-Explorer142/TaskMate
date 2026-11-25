@@ -37,12 +37,14 @@ type ConfirmAction = "accept" | "reject" | null
 export function ApplicantCard({
   application,
   teamFull,
+  locked = false,
   busy,
   onAccept,
   onReject,
 }: {
   application: Application
   teamFull: boolean
+  locked?: boolean
   busy: boolean
   onAccept: (id: number) => void
   onReject: (id: number) => void
@@ -191,7 +193,7 @@ export function ApplicantCard({
             </Button>
           ) : null}
 
-          {application.status === "pending" ? (
+          {application.status === "pending" && !locked ? (
             <>
               <span
                 title={teamFull ? "Team is full" : undefined}

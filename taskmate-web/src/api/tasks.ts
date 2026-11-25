@@ -5,6 +5,9 @@ import type {
   Task,
   TaskFilters,
   TaskPayload,
+  Team,
+  TeamMember,
+  TeamMeta,
 } from "@/types"
 
 function toParams(filters: TaskFilters) {
@@ -76,6 +79,19 @@ export async function myTasks(
 
 export async function getTask(id: number): Promise<Task> {
   const { data } = await api.get<ApiEnvelope<Task>>(`/tasks/${id}`)
+  return data.data
+}
+
+export async function getTaskTeam(id: number): Promise<Team> {
+  const { data } = await api.get<{ data: TeamMember[]; meta: TeamMeta }>(
+    `/tasks/${id}/team`
+  )
+
+  return { members: data.data, meta: data.meta }
+}
+
+export async function startTask(id: number): Promise<Task> {
+  const { data } = await api.patch<ApiEnvelope<Task>>(`/tasks/${id}/start`)
   return data.data
 }
 

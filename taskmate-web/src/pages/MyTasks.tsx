@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { getApiErrorMessage } from "@/api/client"
 import { EmptyState, ErrorState } from "@/components/PageStates"
 import { Pagination } from "@/components/tasks/Pagination"
+import { StartProjectDialog } from "@/components/tasks/StartProjectDialog"
 import { TaskCard } from "@/components/tasks/TaskCard"
 import { TaskCardSkeleton } from "@/components/tasks/TaskCardSkeleton"
 import {
@@ -49,6 +50,7 @@ export function MyTasksPage() {
   const error = useTaskStore((state) => state.error)
   const fetchMyTasks = useTaskStore((state) => state.fetchMyTasks)
   const cancelTask = useTaskStore((state) => state.cancelTask)
+  const startTask = useTaskStore((state) => state.startTask)
   const [busyId, setBusyId] = useState<number | null>(null)
 
   const statusValue = searchParams.get("status") ?? "all"
@@ -98,6 +100,19 @@ export function MyTasksPage() {
       await cancelTask(id)
       toast.success("Task cancelled.")
       await fetchMyTasks(filters)
+    } catch (caught) {
+      toast.error(getApiErrorMessage(caught))
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  async function handleStart(id: number) {
+    setBusyId(id)
+
+    try {
+      await startTask(id)
+      toast.success("Project started.")
     } catch (caught) {
       toast.error(getApiErrorMessage(caught))
     } finally {
@@ -188,6 +203,13 @@ export function MyTasksPage() {
                   showApplicants
                   actions={
                     <>
+                      {task.can_start ? (
+                        <StartProjectDialog
+                          task={task}
+                          busy={busyId === task.id}
+                          onConfirm={() => void handleStart(task.id)}
+                        />
+                      ) : null}
                       <Button variant="outline" size="sm" asChild>
                         <Link to={`/tasks/${task.id}/applicants`}>
                           <Users className="size-4" />

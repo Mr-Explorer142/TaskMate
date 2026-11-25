@@ -112,6 +112,9 @@ class DatabaseSeeder extends Seeder
                 'type' => $type,
                 'reward' => $type === TaskType::Paid ? fake()->randomFloat(2, 50, 500) : 0,
                 'status' => $status,
+                'started_at' => in_array($status, [TaskStatus::InProgress, TaskStatus::Completed], true)
+                    ? now()->subDays(random_int(1, 20))
+                    : null,
                 'skills' => fake()->randomElements(self::TASK_SKILLS, fake()->numberBetween(2, 5)),
             ]);
 
@@ -194,7 +197,8 @@ class DatabaseSeeder extends Seeder
         }
 
         $this->seedDemoApplications($demo, $users);
-        $this->normalizeFullTeams();
+        $this->normalizeTeamStatuses();
+        $this->ensureLeftAndStartedScenarios($demo, $users);
     }
 
     /**
@@ -287,19 +291,90 @@ class DatabaseSeeder extends Seeder
     /**
      * Keep the task status in sync with the accepted team size.
      */
-    private function normalizeFullTeams(): void
+    private function normalizeTeamStatuses(): void
     {
         Task::query()
-            ->where('status', TaskStatus::Open)
+            ->whereIn('status', [TaskStatus::Open, TaskStatus::Full])
             ->withCount([
                 'applications as accepted_applications_count' => fn (Builder $query) => $query
                     ->where('status', ApplicationStatus::Accepted->value),
             ])
             ->get()
             ->each(function (Task $task): void {
-                if ($task->accepted_applications_count >= $task->team_size) {
+                if ($task->status === TaskStatus::Open && $task->accepted_applications_count >= $task->team_size) {
                     $task->update(['status' => TaskStatus::Full]);
                 }
+
+                if ($task->status === TaskStatus::Full && $task->accepted_applications_count < $task->team_size) {
+                    $task->update(['status' => TaskStatus::Open]);
+                }
             });
+    }
+
+    /**
+     * Guarantee the seeded data includes a reopened task after a member left
+     * and an in-progress task with a started team.
+     *
+     * @param  Collection<int, User>  $users
+     */
+    private function ensureLeftAndStartedScenarios(User $demo, Collection $users): void
+    {
+        $openTask = Task::query()
+            ->where('status', TaskStatus::Open)
+            ->whereDoesntHave('applications', fn (Builder $query) => $query
+                ->where('status', ApplicationStatus::Left->value))
+            ->withCount([
+                'applications as accepted_applications_count' => fn (Builder $query) => $query
+                    ->where('status', ApplicationStatus::Accepted->value),
+            ])
+            ->get()
+            ->first(fn (Task $task) => $task->accepted_applications_count < $task->team_size);
+
+        if ($openTask === null) {
+            $openTask = Task::factory()->open()->create([
+                'uploader_id' => $demo->id,
+                'team_size' => 3,
+                'started_at' => null,
+            ]);
+        }
+
+        $leftUser = $users->first(
+            fn (User $user) => $user->id !== $openTask->uploader_id
+                && ! $openTask->applications()->where('user_id', $user->id)->exists(),
+        );
+
+        if ($leftUser === null) {
+            $leftUser = User::factory()->create();
+            $users->push($leftUser);
+        }
+
+        Application::factory()->left()->create([
+            'task_id' => $openTask->id,
+            'user_id' => $leftUser->id,
+        ]);
+
+        $startedTaskExists = Task::query()
+            ->where('status', TaskStatus::InProgress)
+            ->whereNotNull('started_at')
+            ->whereHas('acceptedApplications')
+            ->exists();
+
+        if ($startedTaskExists) {
+            return;
+        }
+
+        $startedTask = Task::factory()->inProgress()->create([
+            'uploader_id' => $demo->id,
+            'team_size' => 2,
+            'started_at' => now()->subDays(3),
+        ]);
+
+        $users
+            ->where('id', '!=', $demo->id)
+            ->take($startedTask->team_size)
+            ->each(fn (User $user) => Application::factory()->accepted()->create([
+                'task_id' => $startedTask->id,
+                'user_id' => $user->id,
+            ]));
     }
 }

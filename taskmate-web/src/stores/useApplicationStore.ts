@@ -5,6 +5,7 @@ import { getApiErrorMessage } from "@/api/client"
 import {
   acceptApplication as acceptApplicationRequest,
   applyToTask as applyToTaskRequest,
+  leaveApplication as leaveApplicationRequest,
   listMyApplications,
   listTaskApplications,
   rejectApplication as rejectApplicationRequest,
@@ -31,6 +32,7 @@ interface ApplicationState {
   withdraw: (id: number) => Promise<void>
   accept: (id: number) => Promise<Application>
   reject: (id: number) => Promise<Application>
+  leave: (id: number) => Promise<Application>
   resetTaskApplications: () => void
 }
 
@@ -129,6 +131,7 @@ export const useApplicationStore = create<ApplicationState>((set) => {
     withdraw: (id) => withdrawApplicationRequest(id),
     accept: (id) => acceptApplicationRequest(id),
     reject: (id) => rejectApplicationRequest(id),
+    leave: (id) => leaveApplicationRequest(id),
 
     resetTaskApplications() {
       taskController?.abort()
