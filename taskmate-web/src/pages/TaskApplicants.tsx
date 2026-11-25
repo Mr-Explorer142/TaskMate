@@ -1,23 +1,25 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import axios from "axios"
-import { ArrowLeft, Inbox, SearchX } from "lucide-react"
+import { ArrowLeft, Inbox, Info, PlayCircle, SearchX } from "lucide-react"
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 
 import type { ApplicationListFilters } from "@/api/applications"
 import { getApiErrorMessage } from "@/api/client"
-import { getTask } from "@/api/tasks"
+import { getTask, getTaskTeam, startTask } from "@/api/tasks"
 import { ApplicantCard } from "@/components/applications/ApplicantCard"
 import { EmptyState, ErrorState } from "@/components/PageStates"
 import { StatusBadge } from "@/components/StatusBadge"
 import { Pagination } from "@/components/tasks/Pagination"
 import { SlotsIndicator } from "@/components/tasks/SlotsIndicator"
+import { StartProjectDialog } from "@/components/tasks/StartProjectDialog"
+import { TeamRoster } from "@/components/tasks/TeamRoster"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useApplicationStore } from "@/stores/useApplicationStore"
-import type { ApplicationStatus, Task } from "@/types"
+import type { ApplicationStatus, Task, Team } from "@/types"
 
 interface ApplicantTab {
   value: string
@@ -73,10 +75,14 @@ export function TaskApplicantsPage() {
   )
 
   const [task, setTask] = useState<Task | null>(null)
+  const [team, setTeam] = useState<Team | null>(null)
   const [taskLoading, setTaskLoading] = useState(true)
+  const [teamLoading, setTeamLoading] = useState(true)
   const [taskError, setTaskError] = useState<string | null>(null)
+  const [teamError, setTeamError] = useState<string | null>(null)
   const [notFound, setNotFound] = useState(false)
   const [busyId, setBusyId] = useState<number | null>(null)
+  const [startBusy, setStartBusy] = useState(false)
 
   const statusValue = searchParams.get("status") ?? "pending"
   const page = pageParam(searchParams.get("page"))
@@ -111,9 +117,31 @@ export function TaskApplicantsPage() {
     }
   }, [taskId])
 
+  const loadTeam = useCallback(async () => {
+    if (!Number.isFinite(taskId) || taskId <= 0) {
+      setTeamLoading(false)
+      return
+    }
+
+    setTeamLoading(true)
+    setTeamError(null)
+
+    try {
+      setTeam(await getTaskTeam(taskId))
+    } catch (caught) {
+      setTeamError(getApiErrorMessage(caught))
+    } finally {
+      setTeamLoading(false)
+    }
+  }, [taskId])
+
   useEffect(() => {
     void loadTask()
   }, [loadTask])
+
+  useEffect(() => {
+    void loadTeam()
+  }, [loadTeam])
 
   useEffect(() => {
     if (task && !task.is_owner) {
@@ -180,6 +208,7 @@ export function TaskApplicantsPage() {
       await accept(applicationId)
       const refreshed = await refreshTask(activeTaskId)
       await fetchApplications(activeTaskId, filters)
+      await loadTeam()
 
       toast.success(
         refreshed?.status === "full" ? "Team is full" : "Application accepted."
@@ -210,6 +239,27 @@ export function TaskApplicantsPage() {
       setBusyId(null)
       await refreshTask(activeTaskId)
       await fetchApplications(activeTaskId, filters)
+    }
+  }
+
+  async function handleStart() {
+    if (!task) {
+      return
+    }
+
+    const activeTaskId = task.id
+    setStartBusy(true)
+
+    try {
+      const updated = await startTask(activeTaskId)
+      setTask(updated)
+      toast.success("Project started.")
+      await fetchApplications(activeTaskId, filters)
+      await loadTeam()
+    } catch (caught) {
+      toast.error(getApiErrorMessage(caught))
+    } finally {
+      setStartBusy(false)
     }
   }
 
@@ -255,6 +305,11 @@ export function TaskApplicantsPage() {
   }
 
   const teamFull = task.status === "full" || task.accepted_count >= task.team_size
+  const isInProgress = task.status === "in_progress"
+  const showPendingHint =
+    task.status === "open" &&
+    (team?.meta.open_slots ?? task.open_slots) > 0 &&
+    (task.pending_count ?? 0) > 0
   const showSkeletons = loading && applications.length === 0
   const emptyTitle =
     activeTab.status === undefined
@@ -274,20 +329,58 @@ export function TaskApplicantsPage() {
         </Link>
       </Button>
 
-      <div className="space-y-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <StatusBadge status={task.status} />
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            {task.title}
-          </h1>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge status={task.status} />
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              {task.title}
+            </h1>
+          </div>
+          <div className="max-w-sm">
+            <SlotsIndicator
+              accepted={task.accepted_count}
+              teamSize={task.team_size}
+            />
+          </div>
         </div>
-        <div className="max-w-sm">
-          <SlotsIndicator
-            accepted={task.accepted_count}
-            teamSize={task.team_size}
+
+        {task.can_start ? (
+          <StartProjectDialog
+            task={task}
+            busy={startBusy}
+            onConfirm={() => void handleStart()}
           />
-        </div>
+        ) : null}
       </div>
+
+      {isInProgress ? (
+        <div className="flex items-start gap-3 rounded-lg border border-status-in-progress/20 bg-status-in-progress-bg p-4 text-status-in-progress">
+          <PlayCircle className="mt-0.5 size-5 shrink-0" />
+          <div className="space-y-0.5">
+            <p className="text-sm font-semibold">Project in progress</p>
+            <p className="text-sm">
+              The team is locked. New applications and team changes are closed.
+            </p>
+          </div>
+        </div>
+      ) : null}
+
+      <TeamRoster
+        members={team?.members ?? []}
+        teamSize={team?.meta.team_size ?? task.team_size}
+        openSlots={team?.meta.open_slots ?? task.open_slots}
+        loading={teamLoading}
+        error={teamError}
+        onRetry={() => void loadTeam()}
+      />
+
+      {showPendingHint ? (
+        <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm text-foreground">
+          <Info className="size-4 shrink-0 text-primary" />
+          A slot is open. Accept someone from Pending.
+        </div>
+      ) : null}
 
       <Tabs value={activeTab.value} onValueChange={setStatus}>
         <TabsList className="w-full justify-start overflow-x-auto">
@@ -337,6 +430,7 @@ export function TaskApplicantsPage() {
                 key={application.id}
                 application={application}
                 teamFull={teamFull}
+                locked={isInProgress}
                 busy={busyId !== null}
                 onAccept={(applicationId) => void handleAccept(applicationId)}
                 onReject={(applicationId) => void handleReject(applicationId)}

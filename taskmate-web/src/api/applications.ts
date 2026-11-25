@@ -77,3 +77,11 @@ export async function rejectApplication(id: number): Promise<Application> {
 
   return data.data
 }
+
+export async function leaveApplication(id: number): Promise<Application> {
+  const { data } = await api.patch<ApiEnvelope<Application>>(
+    `/applications/${id}/leave`
+  )
+
+  return data.data
+}

@@ -121,6 +121,17 @@ it('rejects updates on tasks that are not open or full', function () {
         ->assertJsonValidationErrors(['status']);
 });
 
+it('locks edits once the task is in progress', function () {
+    $user = authAs();
+    $task = Task::factory()->inProgress()->create(['uploader_id' => $user->id]);
+
+    $this->putJson("/api/v1/tasks/{$task->id}", ['title' => 'A new long enough title'])
+        ->assertStatus(409)
+        ->assertJsonPath('message', 'This task is already in progress and can no longer be edited.');
+
+    expect($task->fresh()->title)->not->toBe('A new long enough title');
+});
+
 it('validates the reward against the effective type on update', function () {
     $user = authAs();
     $task = Task::factory()->paid()->create(['uploader_id' => $user->id]);

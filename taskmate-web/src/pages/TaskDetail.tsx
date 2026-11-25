@@ -1,16 +1,18 @@
 import { useCallback, useEffect, useState } from "react"
 import axios from "axios"
-import { ArrowLeft, CalendarDays, Pencil, Star, Trash2, Users, XCircle } from "lucide-react"
+import { ArrowLeft, CalendarDays, Pencil, PlayCircle, Star, Trash2, Users, XCircle } from "lucide-react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { toast } from "sonner"
 
 import { getApiErrorMessage } from "@/api/client"
-import { getTask } from "@/api/tasks"
+import { getTask, getTaskTeam } from "@/api/tasks"
 import { ApplicationStatusBadge } from "@/components/applications/ApplicationStatusBadge"
 import { ApplyDialog } from "@/components/applications/ApplyDialog"
 import { ErrorState } from "@/components/PageStates"
 import { StatusBadge } from "@/components/StatusBadge"
+import { LeaveTeamButton } from "@/components/tasks/LeaveTeamButton"
 import { SlotsIndicator } from "@/components/tasks/SlotsIndicator"
+import { TeamRoster } from "@/components/tasks/TeamRoster"
 import { TypeBadge } from "@/components/tasks/TypeBadge"
 import {
   AlertDialog,
@@ -32,7 +34,7 @@ import { formatDeadline, formatPostedDate, formatReward } from "@/lib/format"
 import { getInitials } from "@/lib/utils"
 import { useApplicationStore } from "@/stores/useApplicationStore"
 import { useTaskStore } from "@/stores/useTaskStore"
-import type { Task, TaskStatus } from "@/types"
+import type { Task, TaskStatus, Team } from "@/types"
 
 function TaskDetailSkeleton() {  return (
     <div className="mx-auto max-w-3xl space-y-4">
@@ -70,9 +72,13 @@ export function TaskDetailPage() {
   const removeTask = useTaskStore((state) => state.removeTask)
   const applyToTask = useApplicationStore((state) => state.apply)
   const withdrawApplication = useApplicationStore((state) => state.withdraw)
+  const leaveTeam = useApplicationStore((state) => state.leave)
   const [task, setTask] = useState<Task | null>(null)
+  const [team, setTeam] = useState<Team | null>(null)
   const [loading, setLoading] = useState(true)
+  const [teamLoading, setTeamLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [teamError, setTeamError] = useState<string | null>(null)
   const [notFound, setNotFound] = useState(false)
   const [busy, setBusy] = useState(false)
   const [applyOpen, setApplyOpen] = useState(false)
@@ -103,9 +109,31 @@ export function TaskDetailPage() {
     }
   }, [id])
 
+  const loadTeam = useCallback(async () => {
+    if (!id) {
+      setTeamLoading(false)
+      return
+    }
+
+    setTeamLoading(true)
+    setTeamError(null)
+
+    try {
+      setTeam(await getTaskTeam(Number(id)))
+    } catch (caught) {
+      setTeamError(getApiErrorMessage(caught))
+    } finally {
+      setTeamLoading(false)
+    }
+  }, [id])
+
   useEffect(() => {
     void loadTask()
   }, [loadTask])
+
+  useEffect(() => {
+    void loadTeam()
+  }, [loadTeam])
 
   async function handleCancel() {
     if (!task) {
@@ -187,6 +215,24 @@ export function TaskDetailPage() {
     }
   }
 
+  async function handleLeave() {
+    if (!task?.my_application_id) {
+      return
+    }
+
+    setApplicationBusy(true)
+
+    try {
+      await leaveTeam(task.my_application_id)
+      toast.success("You have left the team.")
+      await Promise.all([loadTask(), loadTeam()])
+    } catch (caught) {
+      toast.error(getApiErrorMessage(caught))
+    } finally {
+      setApplicationBusy(false)
+    }
+  }
+
   if (loading) {
     return <TaskDetailSkeleton />
   }
@@ -220,6 +266,7 @@ export function TaskDetailPage() {
   }
 
   const isOwner = task.is_owner
+  const isInProgress = task.status === "in_progress"
   const canEdit = isOwner && (task.status === "open" || task.status === "full")
   const canCancel = canEdit
   const canDelete = isOwner && (task.status === "open" || task.status === "cancelled")
@@ -259,6 +306,20 @@ export function TaskDetailPage() {
           </span>
         </div>
       </div>
+
+      {isInProgress ? (
+        <div className="flex items-start gap-3 rounded-lg border border-status-in-progress/20 bg-status-in-progress-bg p-4 text-status-in-progress">
+          <PlayCircle className="mt-0.5 size-5 shrink-0" />
+          <div className="space-y-0.5">
+            <p className="text-sm font-semibold">Project in progress</p>
+            <p className="text-sm">
+              {task.started_at
+                ? `Started on ${formatPostedDate(task.started_at)}. The team is locked.`
+                : "The team is locked."}
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       {isOwner ? (
         <div className="flex flex-wrap gap-2">
@@ -341,6 +402,13 @@ export function TaskDetailPage() {
             </AlertDialog>
           ) : null}
         </div>
+      ) : isInProgress ? (
+        task.my_application_status === "accepted" ? (
+          <ApplicationStatusBadge
+            status="accepted"
+            label="You are on this team"
+          />
+        ) : null
       ) : task.my_application_status === "pending" ? (
         <div className="flex flex-wrap items-center gap-2">
           <ApplicationStatusBadge status="pending" />
@@ -381,10 +449,18 @@ export function TaskDetailPage() {
           </AlertDialog>
         </div>
       ) : task.my_application_status === "accepted" ? (
-        <ApplicationStatusBadge
-          status="accepted"
-          label="You are on this team"
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <ApplicationStatusBadge
+            status="accepted"
+            label="You are on this team"
+          />
+          {task.can_leave ? (
+            <LeaveTeamButton
+              busy={applicationBusy}
+              onConfirm={() => void handleLeave()}
+            />
+          ) : null}
+        </div>
       ) : task.my_application_status === "rejected" ? (
         <ApplicationStatusBadge status="rejected" label="Not selected" />
       ) : task.my_application_status === "left" ? (
@@ -450,6 +526,15 @@ export function TaskDetailPage() {
           </p>
         </CardContent>
       </Card>
+
+      <TeamRoster
+        members={team?.members ?? []}
+        teamSize={team?.meta.team_size ?? task.team_size}
+        openSlots={team?.meta.open_slots ?? task.open_slots}
+        loading={teamLoading}
+        error={teamError}
+        onRetry={() => void loadTeam()}
+      />
 
       {task.uploader ? (
         <Card>

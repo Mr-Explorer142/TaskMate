@@ -20,6 +20,7 @@ class ApplicationResource extends JsonResource
             'message' => $this->message,
             'created_at' => $this->created_at?->toIso8601String(),
             'accepted_at' => $this->accepted_at?->toIso8601String(),
+            'left_at' => $this->left_at?->toIso8601String(),
             'applicant' => $this->whenLoaded('user', fn () => [
                 'id' => $this->user->id,
                 'name' => $this->user->name,

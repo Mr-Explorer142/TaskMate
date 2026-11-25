@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 
 import { ApplicationStatusBadge } from "@/components/applications/ApplicationStatusBadge"
 import { StatusBadge } from "@/components/StatusBadge"
+import { LeaveTeamButton } from "@/components/tasks/LeaveTeamButton"
 import { TypeBadge } from "@/components/tasks/TypeBadge"
 import {
   AlertDialog,
@@ -23,10 +24,12 @@ export function ApplicationRow({
   application,
   busy,
   onWithdraw,
+  onLeave,
 }: {
   application: Application
   busy: boolean
   onWithdraw: (id: number) => void
+  onLeave: (id: number) => void
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const task = application.task
@@ -101,6 +104,14 @@ export function ApplicationRow({
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+        ) : null}
+
+        {application.status === "accepted" &&
+        (task.status === "open" || task.status === "full") ? (
+          <LeaveTeamButton
+            busy={busy}
+            onConfirm={() => onLeave(application.id)}
+          />
         ) : null}
       </CardContent>
     </Card>

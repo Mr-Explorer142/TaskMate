@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'type',
     'reward',
     'status',
+    'started_at',
     'deadline',
     'skills',
 ])]
@@ -37,6 +38,7 @@ class Task extends Model
         return [
             'type' => TaskType::class,
             'status' => TaskStatus::class,
+            'started_at' => 'datetime',
             'deadline' => 'date',
             'reward' => 'decimal:2',
             'skills' => 'array',

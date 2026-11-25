@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\ApplicationStatus;
+use App\Enums\TaskStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -16,6 +18,11 @@ class TaskResource extends JsonResource
     {
         $viewerId = $request->user()?->id;
         $isOwner = $viewerId !== null && $viewerId === $this->uploader_id;
+        $myApplication = $this->relationLoaded('applications')
+            ? $this->applications->first()
+            : null;
+        $acceptedCount = $this->acceptedCount();
+        $canChangeTeam = in_array($this->status, [TaskStatus::Open, TaskStatus::Full], true);
 
         return [
             'id' => $this->id,
@@ -25,12 +32,15 @@ class TaskResource extends JsonResource
             'type' => $this->type->value,
             'reward' => $this->reward,
             'status' => $this->status->value,
+            'started_at' => $this->started_at?->toIso8601String(),
             'deadline' => $this->deadline?->toDateString(),
             'skills' => $this->skills ?? [],
             'created_at' => $this->created_at?->toIso8601String(),
-            'accepted_count' => $this->acceptedCount(),
+            'accepted_count' => $acceptedCount,
             'open_slots' => $this->openSlots(),
             'is_full' => $this->isFull(),
+            'can_start' => $isOwner && $canChangeTeam && $acceptedCount >= 1,
+            'can_leave' => $myApplication?->status === ApplicationStatus::Accepted && $canChangeTeam,
             'applications_count' => $this->when($isOwner, fn () => (int) ($this->applications_count ?? 0)),
             'uploader' => $this->whenLoaded('uploader', fn () => [
                 'id' => $this->uploader->id,

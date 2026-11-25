@@ -39,9 +39,11 @@ class ApplicationController extends Controller
             ->first();
 
         if ($existing !== null) {
-            abort(409, $existing->status === ApplicationStatus::Rejected
-                ? 'You cannot re-apply to this task.'
-                : 'You have already applied to this task.');
+            abort(409, match ($existing->status) {
+                ApplicationStatus::Left => 'You left this team and cannot re-apply.',
+                ApplicationStatus::Rejected => 'You cannot re-apply to this task.',
+                default => 'You have already applied to this task.',
+            });
         }
 
         try {
@@ -192,6 +194,46 @@ class ApplicationController extends Controller
         $application->load($this->applicationRelations());
 
         return ApiResponse::success(new ApplicationResource($application), 'Application rejected.');
+    }
+
+    /**
+     * Leave a task team as an accepted member.
+     */
+    public function leave(Application $application): JsonResponse
+    {
+        Gate::authorize('leave', $application);
+
+        $application = DB::transaction(function () use ($application): Application {
+            $task = Task::query()
+                ->whereKey($application->task_id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $application->refresh();
+
+            if ($application->status !== ApplicationStatus::Accepted) {
+                abort(409, 'Only accepted members can leave the team.');
+            }
+
+            if (! in_array($task->status, [TaskStatus::Open, TaskStatus::Full], true)) {
+                abort(409, 'The project has already started, you cannot leave');
+            }
+
+            $application->update([
+                'status' => ApplicationStatus::Left,
+                'left_at' => now(),
+            ]);
+
+            if ($task->status === TaskStatus::Full) {
+                $task->update(['status' => TaskStatus::Open]);
+            }
+
+            return $application;
+        });
+
+        $application->load($this->applicationRelations());
+
+        return ApiResponse::success(new ApplicationResource($application), 'You have left the team.');
     }
 
     /**

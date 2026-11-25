@@ -12,7 +12,7 @@ const VARIANTS = {
   pending: "pending",
   accepted: "open",
   rejected: "destructive",
-  left: "destructive",
+  left: "secondary",
 } as const
 
 export function ApplicationStatusBadge({

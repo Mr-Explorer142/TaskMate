@@ -25,6 +25,7 @@ const TABS: MyApplicationTab[] = [
   { value: "pending", label: "Pending", status: "pending" },
   { value: "accepted", label: "Accepted", status: "accepted" },
   { value: "rejected", label: "Rejected", status: "rejected" },
+  { value: "left", label: "Left", status: "left" },
 ]
 
 function pageParam(value: string | null): number {
@@ -43,6 +44,7 @@ export function MyApplicationsPage() {
     (state) => state.fetchMyApplications
   )
   const withdraw = useApplicationStore((state) => state.withdraw)
+  const leave = useApplicationStore((state) => state.leave)
   const [busyId, setBusyId] = useState<number | null>(null)
 
   const statusValue = searchParams.get("status") ?? "all"
@@ -86,6 +88,25 @@ export function MyApplicationsPage() {
     try {
       await withdraw(applicationId)
       toast.success("Application withdrawn.")
+
+      if (applications.length === 1 && page > 1) {
+        setPage(page - 1)
+      } else {
+        await fetchApplications(filters)
+      }
+    } catch (caught) {
+      toast.error(getApiErrorMessage(caught))
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  async function handleLeave(applicationId: number) {
+    setBusyId(applicationId)
+
+    try {
+      await leave(applicationId)
+      toast.success("You have left the team.")
 
       if (applications.length === 1 && page > 1) {
         setPage(page - 1)
@@ -170,6 +191,7 @@ export function MyApplicationsPage() {
                 application={application}
                 busy={busyId !== null}
                 onWithdraw={(applicationId) => void handleWithdraw(applicationId)}
+                onLeave={(applicationId) => void handleLeave(applicationId)}
               />
             ))}
           </div>

@@ -8,6 +8,7 @@ use App\Enums\TaskType;
 use App\Http\Requests\StoreTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
 use App\Http\Resources\TaskResource;
+use App\Http\Resources\TeamMemberResource;
 use App\Models\Task;
 use App\Support\ApiResponse;
 use Illuminate\Database\Eloquent\Builder;
@@ -59,6 +60,69 @@ class TaskController extends Controller
     }
 
     /**
+     * List the accepted members of a task team.
+     */
+    public function team(Task $task): AnonymousResourceCollection
+    {
+        $members = $task->acceptedApplications()
+            ->with([
+                'user' => fn (BelongsTo $query) => $query
+                    ->select(['id', 'name', 'avatar', 'bio', 'skills'])
+                    ->withAvg('reviewsReceived', 'rating'),
+            ])
+            ->orderBy('accepted_at')
+            ->get();
+
+        $acceptedCount = $members->count();
+
+        return TeamMemberResource::collection($members)->additional([
+            'meta' => [
+                'team_size' => $task->team_size,
+                'accepted_count' => $acceptedCount,
+                'open_slots' => max(0, $task->team_size - $acceptedCount),
+            ],
+        ]);
+    }
+
+    /**
+     * Start a task and lock its team.
+     */
+    public function start(Request $request, Task $task): JsonResponse
+    {
+        Gate::authorize('start', $task);
+
+        $task = DB::transaction(function () use ($task): Task {
+            $task = Task::query()
+                ->whereKey($task->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (! in_array($task->status, [TaskStatus::Open, TaskStatus::Full], true)) {
+                abort(409, 'Only open or full tasks can be started.');
+            }
+
+            if ($task->acceptedApplications()->count() < 1) {
+                abort(422, 'Accept at least one member before starting');
+            }
+
+            $task->update([
+                'status' => TaskStatus::InProgress,
+                'started_at' => now(),
+            ]);
+
+            $task->applications()
+                ->where('status', ApplicationStatus::Pending->value)
+                ->update(['status' => ApplicationStatus::Rejected->value]);
+
+            return $task;
+        });
+
+        $task = $this->loadRelations($task->fresh(), $request);
+
+        return ApiResponse::success(new TaskResource($task), 'Project started.');
+    }
+
+    /**
      * Create a task.
      */
     public function store(StoreTaskRequest $request): JsonResponse
@@ -85,6 +149,10 @@ class TaskController extends Controller
 
         DB::transaction(function () use ($task, $data): void {
             $task->refresh();
+
+            if ($task->status === TaskStatus::InProgress) {
+                abort(409, 'This task is already in progress and can no longer be edited.');
+            }
 
             if (! in_array($task->status, [TaskStatus::Open, TaskStatus::Full], true)) {
                 throw ValidationException::withMessages([

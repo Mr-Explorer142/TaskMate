@@ -54,8 +54,10 @@ GET    /api/v1/users/{user}/cv          # Bearer token required
 
 GET    /api/v1/tasks                    # Bearer token required
 GET    /api/v1/tasks/{task}             # Bearer token required
+GET    /api/v1/tasks/{task}/team        # Bearer token required
 POST   /api/v1/tasks                    # Bearer token required
 PUT    /api/v1/tasks/{task}             # Bearer token required
+PATCH  /api/v1/tasks/{task}/start       # Bearer token required (owner only)
 PATCH  /api/v1/tasks/{task}/cancel      # Bearer token required
 DELETE /api/v1/tasks/{task}             # Bearer token required
 GET    /api/v1/my/tasks                 # Bearer token required
@@ -66,6 +68,7 @@ DELETE /api/v1/applications/{application} # Bearer token required
 GET    /api/v1/my/applications          # Bearer token required
 PATCH  /api/v1/applications/{application}/accept  # Bearer token required (owner only)
 PATCH  /api/v1/applications/{application}/reject  # Bearer token required (owner only)
+PATCH  /api/v1/applications/{application}/leave   # Bearer token required
 ```
 
 ## Tasks
@@ -89,7 +92,9 @@ every status and only tasks owned by the authenticated user.
 Business rules:
 
 - Only the uploader can update, cancel, or delete a task.
-- Tasks can be updated or cancelled only while `open` or `full`.
+- Tasks can be updated or cancelled only while `open` or `full`. Editing an
+  `in_progress` task returns `409` (`This task is already in progress and can no
+  longer be edited.`).
 - The type cannot change once the task has applications.
 - Team size cannot drop below the number of accepted members.
 - A task with accepted members cannot be deleted; cancel it instead.

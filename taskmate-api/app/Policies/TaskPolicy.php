@@ -32,6 +32,14 @@ class TaskPolicy
     }
 
     /**
+     * Determine whether the user can start the task.
+     */
+    public function start(User $user, Task $task): bool
+    {
+        return $user->id === $task->uploader_id;
+    }
+
+    /**
      * Determine whether the user can cancel the task.
      */
     public function cancel(User $user, Task $task): bool

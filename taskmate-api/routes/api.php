@@ -42,6 +42,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/my/tasks', [TaskController::class, 'myTasks']);
     Route::post('/tasks', [TaskController::class, 'store']);
     Route::get('/tasks/{task}', [TaskController::class, 'show']);
+    Route::get('/tasks/{task}/team', [TaskController::class, 'team']);
+    Route::patch('/tasks/{task}/start', [TaskController::class, 'start']);
     Route::put('/tasks/{task}', [TaskController::class, 'update']);
     Route::patch('/tasks/{task}/cancel', [TaskController::class, 'cancel']);
     Route::delete('/tasks/{task}', [TaskController::class, 'destroy']);
@@ -54,4 +56,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/applications/{application}', [ApplicationController::class, 'withdraw']);
     Route::patch('/applications/{application}/accept', [ApplicationController::class, 'accept']);
     Route::patch('/applications/{application}/reject', [ApplicationController::class, 'reject']);
+    Route::patch('/applications/{application}/leave', [ApplicationController::class, 'leave']);
 });

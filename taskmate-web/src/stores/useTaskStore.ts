@@ -8,6 +8,7 @@ import {
   deleteTask as deleteTaskRequest,
   listTasks,
   myTasks as myTasksRequest,
+  startTask as startTaskRequest,
   updateTask as updateTaskRequest,
 } from "@/api/tasks"
 import type {
@@ -28,6 +29,7 @@ interface TaskState {
   createTask: (payload: TaskPayload) => Promise<Task>
   updateTask: (id: number, payload: Partial<TaskPayload>) => Promise<Task>
   cancelTask: (id: number) => Promise<Task>
+  startTask: (id: number) => Promise<Task>
   removeTask: (id: number) => Promise<void>
 }
 
@@ -106,6 +108,12 @@ export const useTaskStore = create<TaskState>((set) => {
 
     async cancelTask(id) {
       const task = await cancelTaskRequest(id)
+      replaceTask(task)
+      return task
+    },
+
+    async startTask(id) {
+      const task = await startTaskRequest(id)
       replaceTask(task)
       return task
     },
