@@ -97,6 +97,8 @@ class ApplicationController extends Controller
                 'task' => fn (BelongsTo $query) => $query->withCount([
                     'applications as accepted_applications_count' => fn (Builder $query) => $query
                         ->where('status', ApplicationStatus::Accepted->value),
+                    'reviews as my_reviews_count' => fn (Builder $query) => $query
+                        ->where('reviewer_id', $request->user()->id),
                 ]),
             ])
             ->paginate(12);
@@ -273,7 +275,8 @@ class ApplicationController extends Controller
         return [
             'user' => fn (BelongsTo $query) => $query
                 ->with('profileLinks')
-                ->withAvg('reviewsReceived', 'rating'),
+                ->withAvg('reviewsReceived', 'rating')
+                ->withCount('reviewsReceived'),
             'task' => fn (BelongsTo $query) => $query->withCount([
                 'applications as accepted_applications_count' => fn (Builder $query) => $query
                     ->where('status', ApplicationStatus::Accepted->value),

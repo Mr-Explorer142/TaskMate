@@ -43,6 +43,7 @@ export interface User {
   cv_original_name: string | null
   cv_uploaded_at: string | null
   average_rating: number | null
+  reviews_count: number
   points_balance: number
   profile_links: ProfileLink[]
   created_at: string
@@ -57,6 +58,7 @@ export interface PublicUser {
   skills: string[]
   avatar: string | null
   average_rating: number | null
+  reviews_count: number
   has_cv: boolean
   profile_links: ProfileLink[]
   created_at: string
@@ -69,6 +71,7 @@ export interface TaskUploader {
   name: string
   avatar: string | null
   average_rating: number | null
+  reviews_count: number
 }
 
 export interface Task {
@@ -80,6 +83,7 @@ export interface Task {
   reward: string
   status: TaskStatus
   started_at: string | null
+  completed_at: string | null
   deadline: string | null
   skills: string[]
   created_at: string
@@ -87,7 +91,10 @@ export interface Task {
   open_slots: number
   is_full: boolean
   can_start: boolean
+  can_complete: boolean
   can_leave: boolean
+  is_participant: boolean
+  pending_reviews_count: number
   applications_count?: number
   pending_count?: number
   uploader?: TaskUploader
@@ -149,6 +156,7 @@ export interface ApplicationApplicant {
   bio: string | null
   skills: string[]
   average_rating: number | null
+  reviews_count: number
   has_cv: boolean
   profile_links: ProfileLink[]
 }
@@ -161,6 +169,7 @@ export interface ApplicationTaskSummary {
   status: TaskStatus
   team_size: number
   accepted_count: number
+  pending_reviews_count: number
 }
 
 export interface Application {
@@ -181,6 +190,7 @@ export interface TeamMember {
   bio: string | null
   skills: string[]
   average_rating: number | null
+  reviews_count: number
   accepted_at: string
 }
 
@@ -194,6 +204,49 @@ export interface Team {
   members: TeamMember[]
   meta: TeamMeta
 }
+
+export interface PendingReviewee {
+  id: number
+  name: string
+  avatar: string | null
+}
+
+export interface ReviewSummary {
+  average_rating: number | null
+  reviews_count: number
+  distribution: Record<1 | 2 | 3 | 4 | 5, number>
+}
+
+export interface ReviewReviewer {
+  id: number
+  name: string
+  avatar: string | null
+}
+
+export interface ReviewTask {
+  id: number
+  title: string
+}
+
+export interface Review {
+  id: number
+  reviewee_id: number
+  rating: number
+  comment: string | null
+  created_at: string | null
+  reviewer: ReviewReviewer
+  task: ReviewTask
+}
+
+export type ReviewList = Paginated<Review> & { meta: PaginationMeta & ReviewSummary }
+
+export interface ReviewPayload {
+  reviewee_id: number
+  rating: number
+  comment: string | null
+}
+
+export type ReviewFormPayload = Omit<ReviewPayload, "reviewee_id">
 
 export interface ConversationOtherUser {
   id: number

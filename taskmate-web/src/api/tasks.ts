@@ -95,6 +95,11 @@ export async function startTask(id: number): Promise<Task> {
   return data.data
 }
 
+export async function completeTask(id: number): Promise<Task> {
+  const { data } = await api.patch<ApiEnvelope<Task>>(`/tasks/${id}/complete`)
+  return data.data
+}
+
 export async function createTask(payload: TaskPayload): Promise<Task> {
   const { data } = await api.post<ApiEnvelope<Task>>("/tasks", payload)
   return data.data

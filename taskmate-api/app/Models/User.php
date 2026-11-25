@@ -104,15 +104,17 @@ class User extends Authenticatable
     }
 
     /**
-     * The user's average rating, or null when they have no reviews.
+     * The user's average rating from an eager-loaded aggregate.
      */
     protected function averageRating(): Attribute
     {
         return Attribute::make(
             get: function (): ?float {
-                $average = array_key_exists('reviews_received_avg_rating', $this->attributes)
-                    ? $this->attributes['reviews_received_avg_rating']
-                    : $this->reviewsReceived()->avg('rating');
+                if (! array_key_exists('reviews_received_avg_rating', $this->attributes)) {
+                    return null;
+                }
+
+                $average = $this->attributes['reviews_received_avg_rating'];
 
                 return $average === null ? null : round((float) $average, 2);
             },

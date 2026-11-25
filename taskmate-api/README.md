@@ -1,7 +1,8 @@
 # TaskMate API
 
 The Laravel REST API behind TaskMate, a task marketplace where people post
-tasks, build teams, and collaborate on real projects.
+tasks, build teams, and collaborate on real projects. Day 6 adds project
+completion, escrow release/refund, peer reviews, and rating summaries.
 
 ## Stack
 
@@ -50,6 +51,7 @@ PATCH  /api/v1/profile/links/reorder    # Bearer token required
 PUT    /api/v1/profile/links/{link}     # Bearer token required
 DELETE /api/v1/profile/links/{link}     # Bearer token required
 GET    /api/v1/users/{user}             # Bearer token required
+GET    /api/v1/users/{user}/reviews     # Bearer token required
 GET    /api/v1/users/{user}/cv          # Bearer token required
 
 GET    /api/v1/tasks                    # Bearer token required
@@ -58,7 +60,10 @@ GET    /api/v1/tasks/{task}/team        # Bearer token required
 POST   /api/v1/tasks                    # Bearer token required
 PUT    /api/v1/tasks/{task}             # Bearer token required
 PATCH  /api/v1/tasks/{task}/start       # Bearer token required (owner only)
+PATCH  /api/v1/tasks/{task}/complete    # Bearer token required (owner only)
 PATCH  /api/v1/tasks/{task}/cancel      # Bearer token required
+GET    /api/v1/tasks/{task}/reviews/pending  # Bearer token required
+POST   /api/v1/tasks/{task}/reviews     # Bearer token required
 DELETE /api/v1/tasks/{task}             # Bearer token required
 GET    /api/v1/my/tasks                 # Bearer token required
 
@@ -152,6 +157,43 @@ Business rules:
   owner-only `pending_count`, plus each task exposes `my_application_id` and
   `my_application_status` to the current user.
 
+## Completion and reviews
+
+The task owner can complete an `in_progress` project:
+
+```http
+PATCH /api/v1/tasks/{task}/complete
+```
+
+For a points task, each accepted member receives `reward` points and any
+remaining escrow is refunded to the owner. Paid tasks complete without ledger
+rows. A task that is not `in_progress` returns `409`.
+
+Cancelling an `in_progress` project refunds the full escrow to the owner and
+pays members nothing. A completed task cannot be cancelled (`409`).
+
+Reviews are bidirectional between the uploader and accepted members, and only
+participants of a completed task may review each other:
+
+```http
+GET  /api/v1/tasks/{task}/reviews/pending
+POST /api/v1/tasks/{task}/reviews
+     { "reviewee_id": 3, "rating": 5, "comment": "Great work" }
+GET  /api/v1/users/{user}/reviews?page=1
+```
+
+Rules:
+
+- Reviewers and reviewees must be participants; self-reviews return `422`.
+- One review per task/reviewer/reviewee pair; duplicates return `409`.
+- Rating is 1–5; comment is optional, trimmed, and at most 1000 characters.
+- Pending reviews are the remaining participants the viewer has not reviewed.
+- User reviews are paginated 10 per page, newest first, with
+  `meta.average_rating`, `meta.reviews_count`, and `meta.distribution` (1–5).
+- Task payloads include `completed_at`, `can_complete`, `is_participant`, and
+  `pending_reviews_count`. Nested uploader, applicant, and team-member payloads
+  include `average_rating` and `reviews_count`.
+
 ## Points
 
 Every new account - email/password or social - receives a starter bonus of
@@ -191,6 +233,11 @@ Business rules:
 - The ledger is the source of truth: `users.points_balance` always equals the
   sum of that user's transaction amounts.
 - Escrow is reduced by `release` and cleared by `refund`.
+- Completing a points task releases escrow to every accepted member and refunds
+  any leftover escrow to the uploader.
+- Cancelling an in-progress points task refunds the full escrow to the uploader;
+  accepted members receive nothing.
+- Completing a paid task creates no point transactions.
 
 ## Direct messages
 

@@ -1,8 +1,11 @@
 <?php
 
 use App\Enums\ApplicationStatus;
+use App\Enums\PointTransactionType;
 use App\Models\Application;
+use App\Models\PointTransaction;
 use App\Models\Task;
+use App\Services\PointsService;
 
 it('cancels a task and rejects pending applications', function () {
     $user = authAs();
@@ -47,6 +50,55 @@ it('forbids non-owners from cancelling a task', function () {
     $task = Task::factory()->open()->create();
 
     $this->patchJson("/api/v1/tasks/{$task->id}/cancel")->assertForbidden();
+});
+
+it('refunds escrow in full when cancelling an in-progress project', function () {
+    $owner = authAs();
+    app(PointsService::class)->grantBonus($owner, 500, 'Welcome bonus');
+
+    $task = Task::factory()->points()->inProgress()->create([
+        'uploader_id' => $owner->id,
+        'team_size' => 2,
+        'reward' => 60,
+    ]);
+
+    $members = Application::factory()->accepted()->count(2)->create(['task_id' => $task->id]);
+
+    app(PointsService::class)->escrow($owner, $task, 120);
+
+    $this->patchJson("/api/v1/tasks/{$task->id}/cancel")
+        ->assertOk()
+        ->assertJsonPath('data.status', 'cancelled');
+
+    expect($task->fresh()->status->value)->toBe('cancelled')
+        ->and($task->fresh()->escrow_amount)->toBe(0)
+        ->and($owner->fresh()->points_balance)->toBe(500);
+
+    foreach ($members as $member) {
+        expect($member->user->fresh()->points_balance)->toBe(0);
+    }
+
+    $this->assertDatabaseHas('point_transactions', [
+        'user_id' => $owner->id,
+        'task_id' => $task->id,
+        'amount' => 120,
+        'type' => PointTransactionType::Refund->value,
+    ]);
+
+    expect(PointTransaction::query()
+        ->where('task_id', $task->id)
+        ->where('type', PointTransactionType::Release->value)
+        ->count()
+    )->toBe(0);
+});
+
+it('cannot cancel a completed project', function () {
+    $owner = authAs();
+    $task = Task::factory()->completed()->create(['uploader_id' => $owner->id]);
+
+    $this->patchJson("/api/v1/tasks/{$task->id}/cancel")->assertStatus(409);
+
+    expect($task->fresh()->status->value)->toBe('completed');
 });
 
 it('deletes an open task without accepted members', function () {

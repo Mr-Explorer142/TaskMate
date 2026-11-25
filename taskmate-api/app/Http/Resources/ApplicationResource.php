@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\ApplicationStatus;
+use App\Enums\TaskStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -28,6 +30,7 @@ class ApplicationResource extends JsonResource
                 'bio' => $this->user->bio,
                 'skills' => $this->user->skills ?? [],
                 'average_rating' => $this->user->average_rating,
+                'reviews_count' => (int) ($this->user->reviews_received_count ?? 0),
                 'has_cv' => $this->user->has_cv,
                 'profile_links' => ProfileLinkResource::collection($this->user->profileLinks),
             ]),
@@ -39,7 +42,30 @@ class ApplicationResource extends JsonResource
                 'status' => $this->task->status->value,
                 'team_size' => $this->task->team_size,
                 'accepted_count' => $this->task->acceptedCount(),
+                'pending_reviews_count' => $this->pendingReviewsCount($request),
             ]),
         ];
+    }
+
+    /**
+     * Count reviews the current user still owes for a completed task.
+     */
+    private function pendingReviewsCount(Request $request): int
+    {
+        $viewerId = $request->user()?->id;
+
+        if (
+            $viewerId === null
+            || (int) $this->user_id !== (int) $viewerId
+            || $this->status !== ApplicationStatus::Accepted
+            || $this->task->status !== TaskStatus::Completed
+        ) {
+            return 0;
+        }
+
+        return max(
+            0,
+            $this->task->acceptedCount() - (int) ($this->task->my_reviews_count ?? 0)
+        );
     }
 }

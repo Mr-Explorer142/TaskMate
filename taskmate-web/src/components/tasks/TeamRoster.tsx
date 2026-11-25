@@ -4,6 +4,7 @@ import { Link } from "react-router-dom"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { formatRatingLabel } from "@/lib/format"
 import { getInitials } from "@/lib/utils"
 import type { TeamMember } from "@/types"
 
@@ -72,10 +73,8 @@ export function TeamRoster({
                   {member.name}
                 </p>
                 <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Star className="size-3 fill-status-pending text-status-pending" />
-                  {member.average_rating != null
-                    ? `${Number(member.average_rating).toFixed(1)} rating`
-                    : "No ratings yet"}
+                  <Star className="size-3 fill-primary text-primary" />
+                  {formatRatingLabel(member.average_rating, member.reviews_count)}
                 </p>
               </div>
             </Link>

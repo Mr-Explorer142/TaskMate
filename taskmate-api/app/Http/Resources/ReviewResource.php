@@ -16,13 +16,19 @@ class ReviewResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'task_id' => $this->task_id,
-            'reviewer_id' => $this->reviewer_id,
             'reviewee_id' => $this->reviewee_id,
-            'rating' => $this->rating,
+            'rating' => (int) $this->rating,
             'comment' => $this->comment,
             'created_at' => $this->created_at?->toIso8601String(),
-            'updated_at' => $this->updated_at?->toIso8601String(),
+            'reviewer' => $this->whenLoaded('reviewer', fn () => [
+                'id' => $this->reviewer->id,
+                'name' => $this->reviewer->name,
+                'avatar' => $this->reviewer->avatar,
+            ]),
+            'task' => $this->whenLoaded('task', fn () => [
+                'id' => $this->task->id,
+                'title' => $this->task->title,
+            ]),
         ];
     }
 }

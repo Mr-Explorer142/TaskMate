@@ -27,6 +27,7 @@ class UserResource extends JsonResource
             'cv_original_name' => $this->cv_original_name,
             'cv_uploaded_at' => $this->cv_uploaded_at?->toIso8601String(),
             'average_rating' => $this->average_rating,
+            'reviews_count' => (int) ($this->reviews_received_count ?? 0),
             'points_balance' => $this->points_balance,
             'profile_links' => ProfileLinkResource::collection($this->whenLoaded('profileLinks')),
             'created_at' => $this->created_at?->toIso8601String(),

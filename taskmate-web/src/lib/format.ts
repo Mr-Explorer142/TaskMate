@@ -28,3 +28,22 @@ export function formatDeadline(deadline: string | null): string {
 export function formatPostedDate(createdAt: string): string {
   return format(parseISO(createdAt), "MMM d, yyyy")
 }
+
+export function formatRatingLabel(
+  average: number | null | undefined,
+  count?: number
+): string {
+  if (average == null) {
+    return "New"
+  }
+
+  if (count === undefined) {
+    return Number(average).toFixed(1)
+  }
+
+  if (count <= 0) {
+    return "New"
+  }
+
+  return `${Number(average).toFixed(1)} (${count})`
+}

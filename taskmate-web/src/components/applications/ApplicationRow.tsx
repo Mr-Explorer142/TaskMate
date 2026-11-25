@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Star } from "lucide-react"
 import { Link } from "react-router-dom"
 
 import { ApplicationStatusBadge } from "@/components/applications/ApplicationStatusBadge"
@@ -68,6 +69,15 @@ export function ApplicationRow({
             ) : null}
           </div>
         </div>
+
+        {task.status === "completed" && task.pending_reviews_count > 0 ? (
+          <Button variant="outline" size="sm" asChild>
+            <Link to={`/tasks/${task.id}`}>
+              <Star className="size-4" />
+              Review team
+            </Link>
+          </Button>
+        ) : null}
 
         {application.status === "pending" ? (
           <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>

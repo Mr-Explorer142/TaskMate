@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { Plus, SearchX, Users, XCircle } from "lucide-react"
+import { Plus, SearchX, Star, Users, XCircle } from "lucide-react"
 import { Link, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 
@@ -221,6 +221,15 @@ export function MyTasksPage() {
                       <Button variant="outline" size="sm" asChild>
                         <Link to={`/tasks/${task.id}`}>View</Link>
                       </Button>
+                      {task.status === "completed" &&
+                      task.pending_reviews_count > 0 ? (
+                        <Button variant="outline" size="sm" asChild>
+                          <Link to={`/tasks/${task.id}`}>
+                            <Star className="size-4" />
+                            Review team
+                          </Link>
+                        </Button>
+                      ) : null}
                       {canEdit ? (
                         <Button variant="outline" size="sm" asChild>
                           <Link to={`/tasks/${task.id}/edit`}>Edit</Link>

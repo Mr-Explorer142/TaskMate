@@ -17,6 +17,7 @@ use App\Services\PointsService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 
 class DatabaseSeeder extends Seeder
 {
@@ -122,6 +123,9 @@ class DatabaseSeeder extends Seeder
                 'started_at' => in_array($status, [TaskStatus::InProgress, TaskStatus::Completed], true)
                     ? now()->subDays(random_int(1, 20))
                     : null,
+                'completed_at' => $status === TaskStatus::Completed
+                    ? now()->subDays(random_int(1, 10))
+                    : null,
                 'skills' => fake()->randomElements(self::TASK_SKILLS, fake()->numberBetween(2, 5)),
             ]);
 
@@ -199,7 +203,109 @@ class DatabaseSeeder extends Seeder
         $this->seedDemoApplications($demo, $users);
         $this->normalizeTeamStatuses();
         $this->ensureLeftAndStartedScenarios($demo, $users);
+        $this->seedCompletedReviewScenarios($points, $demo, $users);
         $this->seedConversations($demo);
+    }
+
+    /**
+     * Seed deterministic completed projects with released points and partial reviews.
+     *
+     * @param  Collection<int, User>  $users
+     */
+    private function seedCompletedReviewScenarios(PointsService $points, User $demo, Collection $users): void
+    {
+        $members = $users->values();
+
+        $demoTask = Task::factory()->completed()->create([
+            'uploader_id' => $demo->id,
+            'title' => 'Completed demo: landing page handoff',
+            'team_size' => 3,
+            'type' => TaskType::Points,
+            'reward' => 40,
+            'started_at' => now()->subDays(12),
+            'completed_at' => now()->subDays(5),
+        ]);
+
+        $firstMember = $members[0];
+        $secondMember = $members[1];
+
+        foreach ([$firstMember, $secondMember] as $member) {
+            Application::factory()->accepted()->create([
+                'task_id' => $demoTask->id,
+                'user_id' => $member->id,
+            ]);
+        }
+
+        $this->ensureUploaderHasPoints($points, $demoTask->uploader, 80);
+        $points->escrow($demoTask->uploader, $demoTask, 80);
+        $points->release($demoTask, $firstMember, 40);
+        $points->release($demoTask, $secondMember, 40);
+
+        $this->createReview($demoTask, $firstMember, $demo, 5, 'Clear brief and fast feedback.', now()->subDays(4));
+        $this->createReview($demoTask, $demo, $firstMember, 5, 'Great work on the handoff.', now()->subDays(3));
+        $this->createReview($demoTask, $secondMember, $firstMember, 4, null, now()->subDays(2));
+
+        $paidTask = Task::factory()->completed()->create([
+            'uploader_id' => $members[2]->id,
+            'title' => 'Completed paid: brand refresh',
+            'team_size' => 2,
+            'type' => TaskType::Paid,
+            'reward' => 250,
+            'completed_at' => now()->subDays(7),
+        ]);
+
+        Application::factory()->accepted()->create([
+            'task_id' => $paidTask->id,
+            'user_id' => $members[3]->id,
+        ]);
+
+        $this->createReview($paidTask, $members[2], $members[3], 5, 'Reliable collaborator.', now()->subDays(6));
+        $this->createReview($paidTask, $members[3], $members[2], 4, 'Good communication.', now()->subDays(6));
+
+        $otherTask = Task::factory()->completed()->create([
+            'uploader_id' => $members[4]->id,
+            'title' => 'Completed points: data cleanup',
+            'team_size' => 3,
+            'type' => TaskType::Points,
+            'reward' => 30,
+            'completed_at' => now()->subDays(2),
+        ]);
+
+        foreach ([$members[5], $members[6]] as $member) {
+            Application::factory()->accepted()->create([
+                'task_id' => $otherTask->id,
+                'user_id' => $member->id,
+            ]);
+        }
+
+        $this->ensureUploaderHasPoints($points, $otherTask->uploader, 60);
+        $points->escrow($otherTask->uploader, $otherTask, 60);
+        $points->release($otherTask, $members[5], 30);
+        $points->release($otherTask, $members[6], 30);
+
+        $this->createReview($otherTask, $members[5], $members[4], 4, null, now()->subDay());
+    }
+
+    /**
+     * Create a seeded review with a stable timestamp.
+     */
+    private function createReview(
+        Task $task,
+        User $reviewer,
+        User $reviewee,
+        int $rating,
+        ?string $comment,
+        Carbon $createdAt,
+    ): void {
+        Review::factory()->create([
+            'task_id' => $task->id,
+            'reviewer_id' => $reviewer->id,
+            'reviewee_id' => $reviewee->id,
+            'rating' => $rating,
+            'comment' => $comment,
+            'created_at' => $createdAt,
+            'updated_at' => $createdAt,
+        ]);
     }
 
     /**

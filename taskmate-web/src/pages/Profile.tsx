@@ -1,4 +1,4 @@
-import { ExternalLink } from "lucide-react"
+import { ExternalLink, Star } from "lucide-react"
 import { Link } from "react-router-dom"
 
 import { CountryFlag } from "@/components/CountryFlag"
@@ -6,8 +6,10 @@ import { PageLoadingSkeleton } from "@/components/ProtectedRoute"
 import { BasicInfoCard } from "@/components/profile/BasicInfoCard"
 import { CvCard } from "@/components/profile/CvCard"
 import { LinksCard } from "@/components/profile/LinksCard"
+import { ReviewsReceived } from "@/components/reviews/ReviewsReceived"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { formatRatingLabel } from "@/lib/format"
 import { getInitials } from "@/lib/utils"
 import { useAuthStore } from "@/stores/useAuthStore"
 
@@ -29,10 +31,14 @@ export function ProfilePage() {
             </AvatarFallback>
           </Avatar>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-xl font-semibold tracking-tight text-foreground">
                 Your profile
               </h1>
+              <span className="flex items-center gap-1 text-sm font-medium text-foreground">
+                <Star className="size-3.5 fill-primary text-primary" />
+                {formatRatingLabel(user.average_rating, user.reviews_count)}
+              </span>
               <CountryFlag code={user.country} />
             </div>
             <p className="text-sm text-muted-foreground">
@@ -52,6 +58,7 @@ export function ProfilePage() {
       <BasicInfoCard user={user} />
       <CvCard user={user} />
       <LinksCard />
+      <ReviewsReceived userId={user.id} />
     </div>
   )
 }

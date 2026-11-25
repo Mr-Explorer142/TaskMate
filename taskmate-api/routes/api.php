@@ -7,6 +7,7 @@ use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\PointController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfileLinkController;
+use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\TaskController;
 use Illuminate\Support\Facades\Route;
 
@@ -38,6 +39,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/profile/links/{link}', [ProfileLinkController::class, 'destroy']);
 
     Route::get('/users/{user}/cv', [ProfileController::class, 'downloadCv']);
+    Route::get('/users/{user}/reviews', [ReviewController::class, 'forUser']);
     Route::get('/users/{user}', [ProfileController::class, 'show']);
 
     Route::get('/tasks', [TaskController::class, 'index']);
@@ -46,6 +48,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/tasks/{task}', [TaskController::class, 'show']);
     Route::get('/tasks/{task}/team', [TaskController::class, 'team']);
     Route::patch('/tasks/{task}/start', [TaskController::class, 'start']);
+    Route::patch('/tasks/{task}/complete', [TaskController::class, 'complete']);
+    Route::get('/tasks/{task}/reviews/pending', [ReviewController::class, 'pending']);
+    Route::post('/tasks/{task}/reviews', [ReviewController::class, 'store']);
     Route::put('/tasks/{task}', [TaskController::class, 'update']);
     Route::patch('/tasks/{task}/cancel', [TaskController::class, 'cancel']);
     Route::delete('/tasks/{task}', [TaskController::class, 'destroy']);
