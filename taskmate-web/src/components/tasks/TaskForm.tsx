@@ -1,6 +1,5 @@
 import { useEffect } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { format } from "date-fns"
 import { Loader2 } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { Link, useNavigate } from "react-router-dom"
@@ -23,12 +22,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
-import { CURRENCY_SYMBOL } from "@/lib/format"
+import { CURRENCY_SYMBOL, todayInputValue } from "@/lib/format"
 import { useTaskStore } from "@/stores/useTaskStore"
 import type { Task, TaskPayload } from "@/types"
 
 const REWARD_MAX = 1_000_000
-const today = () => format(new Date(), "yyyy-MM-dd")
+const today = todayInputValue
 
 const taskFormSchema = z
   .object({

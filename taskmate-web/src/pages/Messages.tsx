@@ -1,3 +1,4 @@
+import { usePageTitle } from "@/hooks/usePageTitle"
 import { useEffect } from "react"
 import { ArrowLeft, MessagesSquare } from "lucide-react"
 import { Link, useParams } from "react-router-dom"
@@ -32,6 +33,7 @@ function ThreadSkeleton() {
 }
 
 export function MessagesPage() {
+  usePageTitle("Messages")
   const { conversationId } = useParams<{ conversationId: string }>()
   const parsedId = conversationId ? Number(conversationId) : null
   const activeId = parsedId !== null && Number.isFinite(parsedId) ? parsedId : null
@@ -66,6 +68,14 @@ export function MessagesPage() {
           Discuss task details with uploaders and applicants.
         </p>
       </div>
+
+      {error && conversations.length > 0 ? (
+        <ErrorState
+          title="Could not refresh conversations"
+          message={error}
+          onRetry={() => void fetchConversations()}
+        />
+      ) : null}
 
       <div className="grid gap-4 md:grid-cols-[320px_1fr] md:items-start">
         <div

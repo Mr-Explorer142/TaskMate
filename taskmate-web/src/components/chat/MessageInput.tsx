@@ -34,6 +34,7 @@ export function MessageInput({
   return (
     <div className="space-y-2">
       <Textarea
+        aria-label="Message"
         value={value}
         onChange={(event) => setValue(event.target.value.slice(0, MAX_LENGTH))}
         onKeyDown={(event) => {

@@ -14,6 +14,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
+import { formatPoints } from "@/lib/format"
 import { useAuthStore } from "@/stores/useAuthStore"
 import { usePointsStore } from "@/stores/usePointsStore"
 import type { Task } from "@/types"
@@ -69,8 +70,7 @@ export function StartProjectDialog({
         {isPoints ? (
           <div className="space-y-1 rounded-lg border border-border bg-muted/30 p-3 text-sm">
             <p className="text-foreground">
-              Required: {required.toLocaleString("en-US")} points, Your balance:{" "}
-              {balance.toLocaleString("en-US")}
+              Required: {formatPoints(required)} points, Your balance: {formatPoints(balance)}
             </p>
             {insufficient ? (
               <p className="text-status-danger">
@@ -84,7 +84,7 @@ export function StartProjectDialog({
         ) : null}
 
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={busy}>Not yet</AlertDialogCancel>
+          <AlertDialogCancel disabled={busy}>Not now</AlertDialogCancel>
           <AlertDialogAction
             disabled={busy || insufficient}
             onClick={(event) => {

@@ -1,12 +1,15 @@
+import { usePageTitle } from "@/hooks/usePageTitle"
 import { useEffect } from "react"
-import { Coins, Lock, Receipt } from "lucide-react"
+import { AlertCircle, Coins, Lock, Receipt } from "lucide-react"
 import { useSearchParams } from "react-router-dom"
 
 import { EmptyState, ErrorState } from "@/components/PageStates"
 import { TransactionRow } from "@/components/points/TransactionRow"
 import { Pagination } from "@/components/tasks/Pagination"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { formatPoints } from "@/lib/format"
 import { usePointsStore } from "@/stores/usePointsStore"
 
 function pageParam(value: string | null): number {
@@ -16,6 +19,7 @@ function pageParam(value: string | null): number {
 }
 
 export function PointsPage() {
+  usePageTitle("Points")
   const [searchParams, setSearchParams] = useSearchParams()
   const page = pageParam(searchParams.get("page"))
 
@@ -64,6 +68,25 @@ export function PointsPage() {
         </p>
       </div>
 
+      {summaryError && summary ? (
+        <div
+          role="alert"
+          className="flex flex-col gap-2 rounded-lg border border-status-pending/30 bg-status-pending-bg p-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+        >
+          <p className="flex items-center gap-2 text-foreground">
+            <AlertCircle className="size-4 shrink-0 text-status-pending" />
+            {summaryError} Showing the last saved balance.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void fetchSummary()}
+          >
+            Try again
+          </Button>
+        </div>
+      ) : null}
+
       {summaryError && !summary ? (
         <ErrorState
           title="Could not load your points"
@@ -84,7 +107,7 @@ export function PointsPage() {
                 <Skeleton className="h-8 w-24" />
               ) : (
                 <p className="text-3xl font-semibold tabular-nums text-foreground">
-                  {(summary?.balance ?? 0).toLocaleString("en-US")}
+                  {formatPoints(summary?.balance ?? 0)}
                   <span className="ml-1 text-sm font-normal text-muted-foreground">
                     pts
                   </span>
@@ -105,7 +128,7 @@ export function PointsPage() {
                 <Skeleton className="h-8 w-24" />
               ) : (
                 <p className="text-3xl font-semibold tabular-nums text-foreground">
-                  {(summary?.escrowed ?? 0).toLocaleString("en-US")}
+                  {formatPoints(summary?.escrowed ?? 0)}
                   <span className="ml-1 text-sm font-normal text-muted-foreground">
                     pts
                   </span>

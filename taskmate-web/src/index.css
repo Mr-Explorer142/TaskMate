@@ -151,6 +151,24 @@
     @apply border-border outline-ring/50;
   }
 
+  :where(
+      a,
+      button,
+      input,
+      textarea,
+      select,
+      summary,
+      [role="button"],
+      [role="link"],
+      [role="menuitem"],
+      [role="tab"],
+      [role="checkbox"],
+      [role="radio"],
+      [role="switch"]
+    ):focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+
   html {
     @apply bg-background;
   }

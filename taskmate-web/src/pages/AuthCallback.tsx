@@ -1,36 +1,40 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Loader2 } from "lucide-react"
-import { useNavigate, useSearchParams } from "react-router-dom"
-import { toast } from "sonner"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 
 import { me } from "@/api/auth"
 import { getApiErrorMessage } from "@/api/client"
+import { ErrorState } from "@/components/PageStates"
+import { Button } from "@/components/ui/button"
+import { usePageTitle } from "@/hooks/usePageTitle"
 import { useAuthStore } from "@/stores/useAuthStore"
 
 export function AuthCallbackPage() {
+  usePageTitle("Signing in")
+
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const started = useRef(false)
+  const [error, setError] = useState<string | null>(null)
+  const [attempt, setAttempt] = useState(0)
+  const started = useRef(-1)
 
   useEffect(() => {
-    if (started.current) {
+    if (started.current === attempt) {
       return
     }
 
-    started.current = true
+    started.current = attempt
 
     const token = searchParams.get("token")
     const socialError = searchParams.get("social_error")
 
     if (socialError) {
-      toast.error(socialError)
-      navigate("/login", { replace: true })
+      setError(socialError)
       return
     }
 
     if (!token) {
-      toast.error("Sign-in could not be completed. Please try again.")
-      navigate("/login", { replace: true })
+      setError("Sign-in could not be completed. Please try again.")
       return
     }
 
@@ -42,15 +46,38 @@ export function AuthCallbackPage() {
     void me()
       .then((user) => {
         setAuth(user, token)
-        toast.success(`Welcome, ${user.name}.`)
         navigate("/", { replace: true })
       })
-      .catch((error) => {
+      .catch((caught) => {
         clearAuth()
-        toast.error(getApiErrorMessage(error))
-        navigate("/login", { replace: true })
+        setError(getApiErrorMessage(caught))
       })
-  }, [navigate, searchParams])
+      .finally(() => {
+        setHydrating(false)
+      })
+  }, [attempt, navigate, searchParams])
+
+  if (error) {
+    return (
+      <div className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center gap-4 px-4">
+        <ErrorState
+          title="Sign-in failed"
+          message={error}
+          onRetry={
+            searchParams.get("token")
+              ? () => {
+                  setError(null)
+                  setAttempt((value) => value + 1)
+                }
+              : undefined
+          }
+        />
+        <Button asChild variant="outline">
+          <Link to="/login">Go to login</Link>
+        </Button>
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background px-4 text-center">

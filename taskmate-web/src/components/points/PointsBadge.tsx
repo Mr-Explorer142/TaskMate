@@ -3,6 +3,7 @@ import { Coins } from "lucide-react"
 import { Link } from "react-router-dom"
 
 import { Button } from "@/components/ui/button"
+import { formatPoints } from "@/lib/format"
 import { useAuthStore } from "@/stores/useAuthStore"
 import { usePointsStore } from "@/stores/usePointsStore"
 
@@ -21,7 +22,7 @@ export function PointsBadge() {
     <Button variant="outline" size="sm" asChild className="gap-1.5">
       <Link to="/points" aria-label="Points balance">
         <Coins className="size-4 text-primary" />
-        <span className="tabular-nums">{balance.toLocaleString("en-US")}</span>
+        <span className="tabular-nums">{formatPoints(balance)}</span>
         <span className="hidden sm:inline">pts</span>
       </Link>
     </Button>

@@ -1,8 +1,8 @@
 import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2 } from "lucide-react"
+import { AlertCircle, Loader2 } from "lucide-react"
 import { useForm } from "react-hook-form"
-import { Link, useLocation, useNavigate } from "react-router-dom"
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 import { z } from "zod"
 
@@ -20,6 +20,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { usePageTitle } from "@/hooks/usePageTitle"
 import { useAuthStore } from "@/stores/useAuthStore"
 
 const loginSchema = z.object({
@@ -30,10 +31,20 @@ const loginSchema = z.object({
 type LoginValues = z.infer<typeof loginSchema>
 
 export function LoginPage() {
+  usePageTitle("Log in")
+
   const setAuth = useAuthStore((state) => state.setAuth)
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
   const [submitting, setSubmitting] = useState(false)
+
+  const redirect = searchParams.get("redirect")
+  const sessionExpired = searchParams.get("reason") === "session_expired"
+  const safeRedirect =
+    redirect && redirect.startsWith("/") && !redirect.startsWith("//")
+      ? redirect
+      : null
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
@@ -41,7 +52,7 @@ export function LoginPage() {
   })
 
   const from =
-    (location.state as { from?: string } | null)?.from ?? "/"
+    safeRedirect ?? (location.state as { from?: string } | null)?.from ?? "/"
 
   async function onSubmit(values: LoginValues) {
     setSubmitting(true)
@@ -81,6 +92,16 @@ export function LoginPage() {
         </>
       }
     >
+      {sessionExpired ? (
+        <div
+          role="alert"
+          className="mb-4 flex gap-2 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm text-foreground"
+        >
+          <AlertCircle className="size-4 shrink-0 text-primary" />
+          <p>Your session expired. Please log in again.</p>
+        </div>
+      ) : null}
+
       <SocialAuthButtons />
 
       <Form {...form}>
@@ -129,13 +150,6 @@ export function LoginPage() {
           </Button>
         </form>
       </Form>
-
-      <div className="mt-5 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-        <p className="font-medium text-foreground">Demo account</p>
-        <p className="mt-1">
-          demo@taskmate.test / password
-        </p>
-      </div>
     </AuthShell>
   )
 }

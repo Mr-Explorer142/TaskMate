@@ -197,7 +197,7 @@ export function ApplicantCard({
               ) : (
                 <Download className="size-4" />
               )}
-              {downloading ? "Downloading..." : "View CV"}
+              {downloading ? "Downloading..." : "Download CV"}
             </Button>
           ) : null}
 

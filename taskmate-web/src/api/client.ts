@@ -1,5 +1,6 @@
 import axios from "axios"
 import type { AxiosError } from "axios"
+import { toast } from "sonner"
 
 import { useAuthStore } from "@/stores/useAuthStore"
 import type { ApiErrorBody } from "@/types"
@@ -23,20 +24,66 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+const lastNoticeAt = new Map<string, number>()
+
+function notifyOnce(key: string, message: string, description: string) {
+  const now = Date.now()
+
+  if (now - (lastNoticeAt.get(key) ?? 0) < 5_000) {
+    return
+  }
+
+  lastNoticeAt.set(key, now)
+  toast.error(message, { description })
+}
+
+function isPublicAuthRequest(url: string): boolean {
+  return [
+    "/auth/login",
+    "/auth/register",
+    "/auth/me",
+    "/auth/verify",
+    "/auth/resend",
+    "/auth/google",
+    "/auth/github",
+    "/password/forgot",
+    "/password/reset",
+    "/forgot-password",
+    "/reset-password",
+  ].some((path) => url.includes(path))
+}
+
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError<ApiErrorBody>) => {
     const status = error.response?.status
     const url = error.config?.url ?? ""
-    const isAuthRequest =
-      url.includes("/auth/login") || url.includes("/auth/register")
 
-    if (status === 401 && !isAuthRequest) {
+    if (status === 401 && !isPublicAuthRequest(url)) {
       useAuthStore.getState().clearAuth()
 
       if (typeof window !== "undefined" && window.location.pathname !== "/login") {
-        window.location.assign("/login")
+        const current =
+          window.location.pathname + window.location.search + window.location.hash
+        const target = `/login?reason=session_expired&redirect=${encodeURIComponent(current)}`
+        window.location.assign(target)
       }
+    }
+
+    if (status === 403) {
+      notifyOnce(
+        "forbidden",
+        "You don't have permission to do that.",
+        "Check with the task owner or try a different action."
+      )
+    }
+
+    if (status === 429) {
+      notifyOnce(
+        "rate-limited",
+        "Too many attempts.",
+        "Please wait a moment, then try again."
+      )
     }
 
     return Promise.reject(error)
