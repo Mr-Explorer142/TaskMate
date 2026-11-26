@@ -4,6 +4,8 @@
 
 TaskMate connects **task uploaders** (people with a project or task that needs help) with **applicants** (people who want to contribute). Uploaders review applicants' profiles, CVs, and links, accept or reject them, and fill a fixed number of team slots. When the work is done, both sides review each other.
 
+Live deployment: [task-mate-olive-phi.vercel.app](https://task-mate-olive-phi.vercel.app/)
+
 ---
 
 ## Table of Contents
@@ -79,6 +81,7 @@ Is the team full?
 | Frontend   | React                                        |
 | State      | Zustand                                      |
 | UI Library | shadcn/ui, Tailwind CSS                      |
+| Storage    | Cloudinary (profile pictures), Cloudflare R2 (CV/file uploads) |
 
 ---
 
@@ -403,7 +406,7 @@ npm run test
 - [x] Paid / points-exchange options
 - [x] Reviews
 - [x] Notifications
-- [ ] Deployment
+- [x] Deployment
 
 ---
 
