@@ -172,8 +172,10 @@ GET    /api/v1/users/{user}/cv          # Bearer token required
 
 GET    /api/v1/tasks                    # Bearer token required
 GET    /api/v1/tasks/{task}             # Bearer token required
+GET    /api/v1/tasks/{task}/team        # Bearer token required
 POST   /api/v1/tasks                    # Bearer token required
 PUT    /api/v1/tasks/{task}             # Bearer token required
+PATCH  /api/v1/tasks/{task}/start       # Bearer token required (owner only)
 PATCH  /api/v1/tasks/{task}/cancel      # Bearer token required
 DELETE /api/v1/tasks/{task}             # Bearer token required
 GET    /api/v1/my/tasks                 # Bearer token required
@@ -184,6 +186,7 @@ DELETE /api/v1/applications/{application} # Bearer token required
 GET    /api/v1/my/applications          # Bearer token required
 PATCH  /api/v1/applications/{application}/accept  # Bearer token required (owner only)
 PATCH  /api/v1/applications/{application}/reject  # Bearer token required (owner only)
+PATCH  /api/v1/applications/{application}/leave   # Bearer token required
 
 GET    /api/v1/points                   # Bearer token required
 GET    /api/v1/points/transactions      # Bearer token required

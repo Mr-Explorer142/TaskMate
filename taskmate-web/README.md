@@ -82,6 +82,12 @@ Log in with any of them, or register a new account to receive starter points.
   profile pages, rating summaries, and review lists.
 - **Tasks** — browsable/filterable task list, create/edit forms, detail page,
   applicant review, team slots, start/complete/cancel flows, and escrow hints.
+- **Team roster** — accepted members appear as compact cards with rating and a
+  profile link, plus a dashed "Open slot" placeholder for every free slot on the
+  task detail page and above the applicants tabs. Accepted members can leave
+  with confirmation while the task is open or full, which reopens the slot; the
+  member cannot re-apply. Once the owner starts the project, an in-progress
+  banner shows the start date and applying, leaving, and editing are closed.
 - **Messaging** — task-scoped conversations with unread counts, older-history
   loading, polling, optimistic send, and read receipts.
 - **Points** — balance badge, wallet page, escrow/release transactions, and

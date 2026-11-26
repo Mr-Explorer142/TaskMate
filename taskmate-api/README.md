@@ -188,6 +188,35 @@ Business rules:
   owner-only `pending_count`, plus each task exposes `my_application_id` and
   `my_application_status` to the current user.
 
+## Team, leaving, and starting a project
+
+```
+GET   /api/v1/tasks/{task}/team
+PATCH /api/v1/applications/{application}/leave
+PATCH /api/v1/tasks/{task}/start
+```
+
+Business rules:
+
+- `GET /tasks/{task}/team` lists accepted members only, ordered by acceptance
+  time, and returns `{ data, meta }` where `meta` is
+  `{ team_size, accepted_count, open_slots }`.
+- Accepted members can leave while the task is `open` or `full`. Leaving sets
+  `left_at`, keeps the application row, and reopens the task (`full` → `open`)
+  so the owner can accept another applicant.
+- A user who left cannot re-apply to the same task (`409`,
+  `You left this team and cannot re-apply.`).
+- Once a project starts, accepted members cannot leave (`409`,
+  `The project has already started, you cannot leave`).
+- Only the owner can start a project, and only while the task is `open` or
+  `full` with at least one accepted member (`422`,
+  `Accept at least one member before starting`).
+- Starting sets `status` to `in_progress` and `started_at`, rejects every
+  pending application, and locks the team: applying, accepting, leaving, and
+  editing all return `409`.
+- Tasks expose `started_at`, `can_start` (owner, `open`/`full`, at least one
+  accepted member), and `can_leave` (accepted viewer, `open`/`full`).
+
 ## Completion and reviews
 
 The task owner can complete an `in_progress` project:
