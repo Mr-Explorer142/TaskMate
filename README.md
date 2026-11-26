@@ -399,10 +399,10 @@ npm run test
 - [x] Task CRUD and browsing
 - [x] Applications and accept / reject flow
 - [x] Team slot management
-- [ ] Direct messaging
+- [x] Direct messaging
 - [x] Paid / points-exchange options
-- [ ] Reviews
-- [ ] Notifications
+- [x] Reviews
+- [x] Notifications
 - [ ] Deployment
 
 ---
