@@ -170,9 +170,9 @@ DELETE /api/v1/profile/links/{link}     # Bearer token required
 GET    /api/v1/users/{user}             # Bearer token required
 GET    /api/v1/users/{user}/cv          # Bearer token required
 
-GET    /api/v1/tasks                    # Bearer token required
-GET    /api/v1/tasks/{task}             # Bearer token required
-GET    /api/v1/tasks/{task}/team        # Bearer token required
+GET    /api/v1/tasks                    # Public (optional Bearer token)
+GET    /api/v1/tasks/{task}             # Public (optional Bearer token)
+GET    /api/v1/tasks/{task}/team        # Public (optional Bearer token)
 POST   /api/v1/tasks                    # Bearer token required
 PUT    /api/v1/tasks/{task}             # Bearer token required
 PATCH  /api/v1/tasks/{task}/start       # Bearer token required (owner only)
@@ -200,7 +200,9 @@ POST   /api/v1/conversations/{conversation}/read      # Bearer token required
 ```
 
 Protected routes require the Sanctum Bearer token returned by register, login,
-or the social auth callback. Task listing accepts spatie query parameters such
+or the social auth callback. The public task list, detail, and team endpoints
+accept a Bearer token when present and return guest-safe payloads without one,
+with a limit of 60 requests per minute per IP. Task listing accepts spatie query parameters such
 as `filter[search]`, `filter[type]`, `filter[skill]`, `filter[min_reward]`,
 `filter[max_reward]`, `filter[has_open_slots]`, `sort`, and `page`. Application
 listings accept `filter[status]` (`pending`, `accepted`, `rejected`) with
@@ -217,10 +219,15 @@ The `taskmate-web/` folder contains a React single-page application that consume
 ### Responsibilities
 
 - Authentication screens and Sanctum Bearer token session handling
+- Safe internal `?redirect=` handling across login, registration, protected
+  routes, and social login callbacks
 - Email verification code entry and resend screen
 - Social login with Google and GitHub plus OAuth callback handling
-- Task browsing, search, filters, sorting, and pagination
-- Task detail, creation, and editing for uploaders
+- Public homepage with hero, how-it-works, latest tasks, work types, trust, and
+  final CTA sections
+- Public task browsing (search, filters, sorting, pagination) and guest-safe task
+  detail with a login CTA
+- Task creation, editing, and management for uploaders
 - My Tasks management with status tabs and cancel actions
 - Application flow for applicants
 - Applicant review screen for uploaders (profile, CV, links)

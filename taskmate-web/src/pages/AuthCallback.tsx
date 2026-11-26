@@ -7,6 +7,7 @@ import { getApiErrorMessage } from "@/api/client"
 import { ErrorState } from "@/components/PageStates"
 import { Button } from "@/components/ui/button"
 import { usePageTitle } from "@/hooks/usePageTitle"
+import { loginUrl, takeSocialRedirect } from "@/lib/redirect"
 import { useAuthStore } from "@/stores/useAuthStore"
 
 export function AuthCallbackPage() {
@@ -15,10 +16,18 @@ export function AuthCallbackPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
+  const [errorRedirect, setErrorRedirect] = useState<string | null>(null)
   const [attempt, setAttempt] = useState(0)
   const started = useRef(-1)
+  const redirect = useRef<string | null>(null)
+  const redirectLoaded = useRef(false)
 
   useEffect(() => {
+    if (!redirectLoaded.current) {
+      redirect.current = takeSocialRedirect()
+      redirectLoaded.current = true
+    }
+
     if (started.current === attempt) {
       return
     }
@@ -29,11 +38,13 @@ export function AuthCallbackPage() {
     const socialError = searchParams.get("social_error")
 
     if (socialError) {
+      setErrorRedirect(redirect.current)
       setError(socialError)
       return
     }
 
     if (!token) {
+      setErrorRedirect(redirect.current)
       setError("Sign-in could not be completed. Please try again.")
       return
     }
@@ -46,10 +57,11 @@ export function AuthCallbackPage() {
     void me()
       .then((user) => {
         setAuth(user, token)
-        navigate("/", { replace: true })
+        navigate(redirect.current ?? "/", { replace: true })
       })
       .catch((caught) => {
         clearAuth()
+        setErrorRedirect(redirect.current)
         setError(getApiErrorMessage(caught))
       })
       .finally(() => {
@@ -73,7 +85,7 @@ export function AuthCallbackPage() {
           }
         />
         <Button asChild variant="outline">
-          <Link to="/login">Go to login</Link>
+          <Link to={loginUrl(errorRedirect)}>Go to login</Link>
         </Button>
       </div>
     )

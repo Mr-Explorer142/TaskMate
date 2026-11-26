@@ -1,7 +1,8 @@
 import { lazy, Suspense } from "react"
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom"
+import { BrowserRouter, Route, Routes } from "react-router-dom"
 
 import { AuthBootstrap } from "@/components/AuthBootstrap"
+import { ScrollToTop } from "@/components/ScrollToTop"
 import { AppLayout } from "@/components/layout/AppLayout"
 import {
   PageLoadingSkeleton,
@@ -14,6 +15,9 @@ const AuthCallbackPage = lazy(() =>
   import("@/pages/AuthCallback").then((module) => ({
     default: module.AuthCallbackPage,
   }))
+)
+const HomePage = lazy(() =>
+  import("@/pages/Home").then((module) => ({ default: module.HomePage }))
 )
 const CreateTaskPage = lazy(() =>
   import("@/pages/CreateTask").then((module) => ({
@@ -92,6 +96,7 @@ function App() {
   return (
     <AuthBootstrap>
       <BrowserRouter>
+        <ScrollToTop />
         <Suspense fallback={<PageLoadingSkeleton />}>
           <Routes>
             <Route
@@ -113,12 +118,15 @@ function App() {
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
 
+            <Route element={<AppLayout />}>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/tasks" element={<TasksPage />} />
+              <Route path="/tasks/:id" element={<TaskDetailPage />} />
+            </Route>
+
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
-                <Route path="/" element={<Navigate to="/tasks" replace />} />
-                <Route path="/tasks" element={<TasksPage />} />
                 <Route path="/tasks/new" element={<CreateTaskPage />} />
-                <Route path="/tasks/:id" element={<TaskDetailPage />} />
                 <Route path="/tasks/:id/edit" element={<EditTaskPage />} />
                 <Route
                   path="/tasks/:id/applicants"

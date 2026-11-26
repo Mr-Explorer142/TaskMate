@@ -224,7 +224,7 @@ export function MyTasksPage() {
                         <Link to={`/tasks/${task.id}`}>View</Link>
                       </Button>
                       {task.status === "completed" &&
-                      task.pending_reviews_count > 0 ? (
+                      (task.pending_reviews_count ?? 0) > 0 ? (
                         <Button variant="outline" size="sm" asChild>
                           <Link to={`/tasks/${task.id}`}>
                             <Star className="size-4" />

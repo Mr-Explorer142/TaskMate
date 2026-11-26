@@ -12,6 +12,7 @@ import { PointsBadge } from "@/components/points/PointsBadge"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { loginUrl, registerUrl } from "@/lib/redirect"
 import { useAuthStore } from "@/stores/useAuthStore"
 import { useChatStore } from "@/stores/useChatStore"
 import { useNotificationStore } from "@/stores/useNotificationStore"
@@ -41,6 +42,7 @@ export function Navbar() {
   const [loggingOut, setLoggingOut] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
+  const currentPath = `${location.pathname}${location.search}${location.hash}`
 
   useEffect(() => {
     setMenuOpen(false)
@@ -179,10 +181,10 @@ export function Navbar() {
               <div className="hidden items-center gap-1 lg:flex">
                 <ThemeToggle />
                 <Button asChild variant="ghost" size="sm">
-                  <Link to="/login">Log in</Link>
+                  <Link to={loginUrl(currentPath)}>Log in</Link>
                 </Button>
                 <Button asChild size="sm">
-                  <Link to="/register">Sign up</Link>
+                  <Link to={registerUrl(currentPath)}>Sign up</Link>
                 </Button>
               </div>
             )}
@@ -207,6 +209,7 @@ export function Navbar() {
         user={user}
         unreadCount={unreadCount}
         loggingOut={loggingOut}
+        redirect={currentPath}
         onLogout={() => void handleLogout()}
       />
     </header>

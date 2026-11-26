@@ -3,7 +3,8 @@
 TaskMate is a small task marketplace where people team up on real work. This is
 the React single-page frontend for the Laravel API in `../taskmate-api`. Users
 can publish tasks, apply to join a team, message teammates, settle points tasks,
-leave peer reviews, and follow progress through in-app notifications.
+leave peer reviews, and follow progress through in-app notifications. Visitors
+can explore the homepage, task list, and task detail pages without an account.
 
 ## User flow
 
@@ -74,7 +75,11 @@ Log in with any of them, or register a new account to receive starter points.
 ## Features
 
 - **Auth** — login, registration, email verification, social auth callback,
-  protected/public-only routes, session-expiry redirect, logout.
+  protected/public-only routes, safe internal `?redirect=` handling across email
+  and social login, session-expiry redirect, logout.
+- **Public discovery** — homepage with hero, how-it-works, latest tasks, work
+  types, trust and final CTA sections; public task list and guest-safe detail
+  pages with login/sign-up CTAs; meta description and Open Graph tags.
 - **Notifications** — bell dropdown with unread badge and latest 8 items, a
   paginated `/notifications` page with All/Unread tabs, mark-read actions, and
   20-second unread polling that pauses in hidden tabs.
@@ -98,14 +103,14 @@ Log in with any of them, or register a new account to receive starter points.
 
 | Route | Access | Page |
 | --- | --- | --- |
-| `/login` | Public | Log in |
-| `/register` | Public | Sign up |
+| `/login` | Public-only | Log in (`?redirect=` supported) |
+| `/register` | Public-only | Sign up (`?redirect=` supported) |
 | `/verify-email` | Public | Email verification |
-| `/auth/callback` | Public | OAuth callback |
-| `/` | Protected | Redirects to `/tasks` |
-| `/tasks` | Protected | Browse tasks |
+| `/auth/callback` | Public | OAuth callback (restores saved redirect) |
+| `/` | Public | Home page with six marketing sections |
+| `/tasks` | Public | Browse tasks |
 | `/tasks/new` | Protected | Post a task |
-| `/tasks/:id` | Protected | Task detail |
+| `/tasks/:id` | Public | Task detail with guest login CTA |
 | `/tasks/:id/edit` | Protected | Edit an owned task |
 | `/tasks/:id/applicants` | Protected (owner) | Review applicants |
 | `/my-tasks` | Protected | Tasks you posted |
@@ -116,6 +121,12 @@ Log in with any of them, or register a new account to receive starter points.
 | `/points` | Protected | Points wallet |
 | `/profile` | Protected | Own profile |
 | `/users/:id` | Protected | Public profile (`#reviews` anchors reviews) |
+
+Protected routes send guests to `/login?redirect=<current-path>`; login,
+registration, and OAuth callbacks only accept internal paths, so external
+redirects are ignored. Guest links in the navbar, mobile menu, and footer also
+carry the current path so visitors return where they left off. Hash links such as
+`/#how-it-works` smooth-scroll after navigation.
 
 Unknown routes render a real 404 page. Unexpected render errors are caught by a
 global error boundary with a reload action.
@@ -128,7 +139,8 @@ src/
   components/
     applications/ application dialogs, cards, rows, badges
     chat/         conversation list, thread, bubbles, input
-    layout/       app shell, auth shell, footer
+    home/         hero and public homepage sections
+    layout/       app shell, auth shell, navbar, mobile menu, footer
     notifications/ bell dropdown and notification row
     points/       balance badge and transaction row
     profile/      profile cards, link editor, public profile view
@@ -136,7 +148,7 @@ src/
     tasks/        cards, filters, forms, badges, pagination, dialogs
     ui/           shadcn/ui components
   hooks/          useDebounce, usePolling, usePageTitle
-  lib/            formatting, notification navigation, utilities
+  lib/            formatting, notification navigation, safe redirects, utilities
   pages/          lazy-loaded route pages
   stores/         Zustand auth, task, application, chat, points, notifications
   types/          shared TypeScript types

@@ -3,7 +3,7 @@ import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2 } from "lucide-react"
 import { useForm } from "react-hook-form"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 import { z } from "zod"
 
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { formatPoints } from "@/lib/format"
+import { loginUrl, safeRedirect } from "@/lib/redirect"
 import { useAuthStore } from "@/stores/useAuthStore"
 
 const registerSchema = z
@@ -46,7 +47,11 @@ export function RegisterPage() {
   usePageTitle("Sign up")
   const setAuth = useAuthStore((state) => state.setAuth)
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [submitting, setSubmitting] = useState(false)
+
+  const targetRedirect = safeRedirect(searchParams.get("redirect")) ?? "/profile"
+  const intent = searchParams.get("redirect") ? targetRedirect : null
 
   const form = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
@@ -78,7 +83,7 @@ export function RegisterPage() {
       } else {
         toast.success("Account created. Welcome to TaskMate!")
       }
-      navigate("/profile", { replace: true })
+      navigate(targetRedirect, { replace: true })
     } catch (error) {
       const fieldErrors = getFieldErrors(error)
 
@@ -101,13 +106,16 @@ export function RegisterPage() {
       footer={
         <>
           Already have an account?{" "}
-          <Link to="/login" className="font-medium text-primary hover:underline">
+          <Link
+            to={loginUrl(intent)}
+            className="font-medium text-primary hover:underline"
+          >
             Log in
           </Link>
         </>
       }
     >
-      <SocialAuthButtons />
+      <SocialAuthButtons redirect={targetRedirect} />
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="mt-5 space-y-4">

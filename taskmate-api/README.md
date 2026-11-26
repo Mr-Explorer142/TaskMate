@@ -80,9 +80,9 @@ GET    /api/v1/users/{user}             # Bearer token required
 GET    /api/v1/users/{user}/reviews     # Bearer token required
 GET    /api/v1/users/{user}/cv          # Bearer token required
 
-GET    /api/v1/tasks                    # Bearer token required
-GET    /api/v1/tasks/{task}             # Bearer token required
-GET    /api/v1/tasks/{task}/team        # Bearer token required
+GET    /api/v1/tasks                    # Public (optional Bearer token)
+GET    /api/v1/tasks/{task}             # Public (optional Bearer token)
+GET    /api/v1/tasks/{task}/team        # Public (optional Bearer token)
 POST   /api/v1/tasks                    # Bearer token required
 PUT    /api/v1/tasks/{task}             # Bearer token required
 PATCH  /api/v1/tasks/{task}/start       # Bearer token required (owner only)
@@ -116,6 +116,12 @@ GET    /api/v1/notifications/unread-count # Bearer token required
 POST   /api/v1/notifications/{id}/read   # Bearer token required
 POST   /api/v1/notifications/read-all    # Bearer token required
 ```
+
+The three public task-browsing routes accept a Bearer token when present.
+Authenticated viewers receive owner and application flags on the same payload;
+guests receive sanitized data with no uploader email, CV paths, points
+balances, applicant details, or application data. These routes are limited to
+60 requests per minute per IP.
 
 ## Tasks
 
@@ -417,6 +423,7 @@ Current rate limits:
 
 | Endpoints | Limit |
 | --- | --- |
+| Public task list, detail and team | 60/minute per IP |
 | Login, register, password forgot/reset | 10/minute |
 | Email verification / resend | 6/minute, 3/minute |
 | Apply to a task | 30/minute |

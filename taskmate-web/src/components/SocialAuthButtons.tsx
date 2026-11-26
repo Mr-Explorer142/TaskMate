@@ -2,6 +2,7 @@ import { Github } from "lucide-react"
 
 import { API_BASE_URL } from "@/api/client"
 import { Button } from "@/components/ui/button"
+import { storeSocialRedirect } from "@/lib/redirect"
 
 function GoogleIcon() {
   return (
@@ -31,13 +32,20 @@ const providers = [
   { id: "github", label: "GitHub", icon: Github },
 ]
 
-export function SocialAuthButtons() {
+export function SocialAuthButtons({
+  redirect,
+}: {
+  redirect?: string | null
+}) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-2">
         {providers.map((provider) => (
           <Button key={provider.id} type="button" variant="outline" asChild>
-            <a href={`${API_BASE_URL}/auth/${provider.id}/redirect`}>
+            <a
+              href={`${API_BASE_URL}/auth/${provider.id}/redirect`}
+              onClick={() => storeSocialRedirect(redirect)}
+            >
               <provider.icon />
               {provider.label}
             </a>

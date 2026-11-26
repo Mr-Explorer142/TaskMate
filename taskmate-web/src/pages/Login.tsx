@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { usePageTitle } from "@/hooks/usePageTitle"
+import { registerUrl, safeRedirect } from "@/lib/redirect"
 import { useAuthStore } from "@/stores/useAuthStore"
 
 const loginSchema = z.object({
@@ -41,18 +42,17 @@ export function LoginPage() {
 
   const redirect = searchParams.get("redirect")
   const sessionExpired = searchParams.get("reason") === "session_expired"
-  const safeRedirect =
-    redirect && redirect.startsWith("/") && !redirect.startsWith("//")
-      ? redirect
-      : null
+  const targetRedirect =
+    safeRedirect(redirect) ??
+    safeRedirect((location.state as { from?: string } | null)?.from) ??
+    "/"
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   })
 
-  const from =
-    safeRedirect ?? (location.state as { from?: string } | null)?.from ?? "/"
+  const intent = targetRedirect === "/" ? null : targetRedirect
 
   async function onSubmit(values: LoginValues) {
     setSubmitting(true)
@@ -61,7 +61,7 @@ export function LoginPage() {
       const result = await login(values)
       setAuth(result.user, result.token)
       toast.success(`Welcome back, ${result.user.name}.`)
-      navigate(from, { replace: true })
+      navigate(targetRedirect, { replace: true })
     } catch (error) {
       const fieldErrors = getFieldErrors(error)
 
@@ -86,7 +86,10 @@ export function LoginPage() {
       footer={
         <>
           New to TaskMate?{" "}
-          <Link to="/register" className="font-medium text-primary hover:underline">
+          <Link
+            to={registerUrl(intent)}
+            className="font-medium text-primary hover:underline"
+          >
             Create an account
           </Link>
         </>
@@ -102,7 +105,7 @@ export function LoginPage() {
         </div>
       ) : null}
 
-      <SocialAuthButtons />
+      <SocialAuthButtons redirect={targetRedirect} />
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="mt-5 space-y-4">

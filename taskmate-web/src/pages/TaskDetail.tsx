@@ -40,8 +40,10 @@ import {
   formatRatingLabel,
   formatReward,
 } from "@/lib/format"
+import { loginUrl, registerUrl } from "@/lib/redirect"
 import { getInitials } from "@/lib/utils"
 import { useApplicationStore } from "@/stores/useApplicationStore"
+import { useAuthStore } from "@/stores/useAuthStore"
 import { usePointsStore } from "@/stores/usePointsStore"
 import { useTaskStore } from "@/stores/useTaskStore"
 import type { Task, TaskStatus, Team } from "@/types"
@@ -79,6 +81,7 @@ export function TaskDetailPage() {
   usePageTitle("Task details")
   const { id } = useParams()
   const navigate = useNavigate()
+  const isGuest = !useAuthStore((state) => state.token)
   const cancelTask = useTaskStore((state) => state.cancelTask)
   const completeTask = useTaskStore((state) => state.completeTask)
   const removeTask = useTaskStore((state) => state.removeTask)
@@ -190,7 +193,10 @@ export function TaskDetailPage() {
       current
         ? {
             ...current,
-            pending_reviews_count: Math.max(0, current.pending_reviews_count - 1),
+            pending_reviews_count: Math.max(
+              0,
+              (current.pending_reviews_count ?? 0) - 1
+            ),
           }
         : current
     )
@@ -316,12 +322,34 @@ export function TaskDetailPage() {
     isOwner &&
     (task.status === "open" || task.status === "full" || isInProgress)
   const canDelete = isOwner && (task.status === "open" || task.status === "cancelled")
+  const taskPath = `/tasks/${task.id}`
   const rating = task.uploader
     ? formatRatingLabel(
         task.uploader.average_rating,
         task.uploader.reviews_count
       )
     : null
+  const uploaderSummary = task.uploader ? (
+    <>
+      <Avatar className="size-11">
+        {task.uploader.avatar ? (
+          <AvatarImage src={task.uploader.avatar} alt={task.uploader.name} />
+        ) : null}
+        <AvatarFallback className="bg-secondary text-sm font-semibold text-secondary-foreground">
+          {getInitials(task.uploader.name)}
+        </AvatarFallback>
+      </Avatar>
+      <div className="min-w-0">
+        <p className="truncate font-medium text-foreground">
+          {task.uploader.name}
+        </p>
+        <p className="flex items-center gap-1 text-sm text-muted-foreground">
+          <Star className="size-3.5 fill-primary text-primary" />
+          {rating}
+        </p>
+      </div>
+    </>
+  ) : null
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -388,7 +416,7 @@ export function TaskDetailPage() {
               {task.completed_at
                 ? `Finished on ${formatPostedDate(task.completed_at)}.`
                 : "The team is now closed."}
-              {task.is_participant && task.pending_reviews_count > 0
+              {task.is_participant && (task.pending_reviews_count ?? 0) > 0
                 ? ` ${task.pending_reviews_count} review${task.pending_reviews_count === 1 ? "" : "s"} left to submit.`
                 : ""}
             </p>
@@ -396,7 +424,22 @@ export function TaskDetailPage() {
         </div>
       ) : null}
 
-      {isOwner ? (
+      {isGuest ? (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <Button asChild size="sm">
+            <Link to={loginUrl(taskPath)}>Log in to apply</Link>
+          </Button>
+          <p className="text-sm text-muted-foreground">
+            New here?{" "}
+            <Link
+              to={registerUrl(taskPath)}
+              className="font-medium text-primary hover:underline"
+            >
+              Sign up
+            </Link>
+          </p>
+        </div>
+      ) : isOwner ? (
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" asChild>
             <Link to={`/tasks/${task.id}/applicants`}>
@@ -517,7 +560,7 @@ export function TaskDetailPage() {
               label="Message uploader"
             />
           ) : null}
-          {task.pending_reviews_count > 0 ? (
+          {(task.pending_reviews_count ?? 0) > 0 ? (
             <span className="text-xs text-muted-foreground">
               {task.pending_reviews_count} review
               {task.pending_reviews_count === 1 ? "" : "s"} left to submit below.
@@ -629,13 +672,15 @@ export function TaskDetailPage() {
         </div>
       )}
 
-      <ApplyDialog
-        open={applyOpen}
-        onOpenChange={setApplyOpen}
-        taskTitle={task.title}
-        submitting={applicationBusy}
-        onSubmit={(message) => void handleApply(message)}
-      />
+      {!isGuest ? (
+        <ApplyDialog
+          open={applyOpen}
+          onOpenChange={setApplyOpen}
+          taskTitle={task.title}
+          submitting={applicationBusy}
+          onSubmit={(message) => void handleApply(message)}
+        />
+      ) : null}
 
       <Card>
         <CardHeader>
@@ -682,34 +727,22 @@ export function TaskDetailPage() {
         <PendingReviews taskId={task.id} onReviewed={handleReviewed} />
       ) : null}
 
-      {task.uploader ? (
+      {uploaderSummary ? (
         <Card>
           <CardHeader>
             <CardTitle>Posted by</CardTitle>
           </CardHeader>
           <CardContent>
-            <Link
-              to={`/users/${task.uploader.id}`}
-              className="flex items-center gap-3 rounded-lg transition-colors hover:text-primary"
-            >
-              <Avatar className="size-11">
-                {task.uploader.avatar ? (
-                  <AvatarImage src={task.uploader.avatar} alt={task.uploader.name} />
-                ) : null}
-                <AvatarFallback className="bg-secondary text-sm font-semibold text-secondary-foreground">
-                  {getInitials(task.uploader.name)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0">
-                <p className="truncate font-medium text-foreground">
-                  {task.uploader.name}
-                </p>
-                <p className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Star className="size-3.5 fill-primary text-primary" />
-                  {rating}
-                </p>
-              </div>
-            </Link>
+            {isGuest ? (
+              <div className="flex items-center gap-3">{uploaderSummary}</div>
+            ) : (
+              <Link
+                to={`/users/${task.uploader?.id}`}
+                className="flex items-center gap-3 rounded-lg transition-colors hover:text-primary"
+              >
+                {uploaderSummary}
+              </Link>
+            )}
           </CardContent>
         </Card>
       ) : null}

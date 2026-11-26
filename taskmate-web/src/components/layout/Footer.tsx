@@ -1,8 +1,9 @@
 import { Github } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
 
 import { Logo } from "@/components/Logo"
 import { GITHUB_URL } from "@/lib/constants"
+import { loginUrl, registerUrl } from "@/lib/redirect"
 import { useAuthStore } from "@/stores/useAuthStore"
 
 const guestLinks = [
@@ -21,8 +22,16 @@ const memberLinks = [
 
 export function Footer() {
   const user = useAuthStore((state) => state.user)
-  const links = user ? memberLinks : guestLinks
+  const location = useLocation()
   const currentYear = new Date().getFullYear()
+  const currentPath = `${location.pathname}${location.search}${location.hash}`
+  const links = (user ? memberLinks : guestLinks).map((link) =>
+    link.to === "/login"
+      ? { ...link, to: loginUrl(currentPath) }
+      : link.to === "/register"
+        ? { ...link, to: registerUrl(currentPath) }
+        : link
+  )
 
   return (
     <footer className="border-t border-border bg-card">

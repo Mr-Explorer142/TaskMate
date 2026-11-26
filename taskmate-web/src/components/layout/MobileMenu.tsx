@@ -9,6 +9,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { formatPoints } from "@/lib/format"
+import { loginUrl, registerUrl } from "@/lib/redirect"
 import type { User } from "@/types"
 
 const guestLinks = [
@@ -29,6 +30,7 @@ export function MobileMenu({
   user,
   unreadCount,
   loggingOut,
+  redirect,
   onLogout,
 }: {
   open: boolean
@@ -36,6 +38,7 @@ export function MobileMenu({
   user: User | null
   unreadCount: number
   loggingOut: boolean
+  redirect?: string | null
   onLogout: () => void
 }) {
   function close() {
@@ -121,12 +124,12 @@ export function MobileMenu({
 
               <div className="mt-3 flex flex-col gap-2 border-t border-border pt-4">
                 <Button asChild variant="ghost" className="w-full">
-                  <Link to="/login" onClick={close}>
+                  <Link to={loginUrl(redirect)} onClick={close}>
                     Log in
                   </Link>
                 </Button>
                 <Button asChild className="w-full">
-                  <Link to="/register" onClick={close}>
+                  <Link to={registerUrl(redirect)} onClick={close}>
                     Sign up
                   </Link>
                 </Button>
