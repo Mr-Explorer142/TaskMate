@@ -1,7 +1,8 @@
 import type { ReactNode } from "react"
-import { Navigate, Outlet, useLocation } from "react-router-dom"
+import { Navigate, Outlet, useLocation, useSearchParams } from "react-router-dom"
 
 import { Skeleton } from "@/components/ui/skeleton"
+import { safeRedirect } from "@/lib/redirect"
 import { useAuthStore } from "@/stores/useAuthStore"
 
 export function PageLoadingSkeleton() {
@@ -25,11 +26,13 @@ export function ProtectedRoute() {
   }
 
   if (!token) {
+    const from = `${location.pathname}${location.search}${location.hash}`
+
     return (
       <Navigate
-        to="/login"
+        to={`/login?redirect=${encodeURIComponent(from)}`}
         replace
-        state={{ from: `${location.pathname}${location.search}` }}
+        state={{ from }}
       />
     )
   }
@@ -40,13 +43,16 @@ export function ProtectedRoute() {
 export function PublicOnlyRoute({ children }: { children: ReactNode }) {
   const token = useAuthStore((state) => state.token)
   const isHydrating = useAuthStore((state) => state.isHydrating)
+  const [searchParams] = useSearchParams()
 
   if (isHydrating) {
     return <PageLoadingSkeleton />
   }
 
   if (token) {
-    return <Navigate to="/" replace />
+    return (
+      <Navigate to={safeRedirect(searchParams.get("redirect")) ?? "/"} replace />
+    )
   }
 
   return <>{children}</>

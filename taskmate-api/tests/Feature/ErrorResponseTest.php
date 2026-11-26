@@ -29,7 +29,7 @@ beforeEach(function () {
 });
 
 it('returns a consistent envelope for 401 responses', function () {
-    daySevenAssertErrorEnvelope($this->getJson('/api/v1/tasks'), 401);
+    daySevenAssertErrorEnvelope($this->getJson('/api/v1/notifications'), 401);
 });
 
 it('returns a consistent envelope for 403 responses', function () {

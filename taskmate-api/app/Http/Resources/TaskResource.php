@@ -16,7 +16,7 @@ class TaskResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $viewerId = $request->user()?->id;
+        $viewerId = $request->user('sanctum')?->id;
         $isOwner = $viewerId !== null && $viewerId === $this->uploader_id;
         $myApplication = $this->relationLoaded('applications')
             ? $this->applications->first()
@@ -47,9 +47,11 @@ class TaskResource extends JsonResource
             'can_complete' => $isOwner && $this->status === TaskStatus::InProgress,
             'can_leave' => $myApplication?->status === ApplicationStatus::Accepted && $canChangeTeam,
             'is_participant' => $isParticipant,
-            'pending_reviews_count' => $isParticipant && $isCompleted
-                ? max(0, $acceptedCount - (int) ($this->my_reviews_count ?? 0))
-                : 0,
+            'pending_reviews_count' => $viewerId === null
+                ? null
+                : ($isParticipant && $isCompleted
+                    ? max(0, $acceptedCount - (int) ($this->my_reviews_count ?? 0))
+                    : 0),
             'applications_count' => $this->when($isOwner, fn () => (int) ($this->applications_count ?? 0)),
             'uploader' => $this->whenLoaded('uploader', fn () => [
                 'id' => $this->uploader->id,

@@ -343,6 +343,8 @@ class TaskController extends Controller
      */
     private function buildQuery(Request $request, bool $allStatuses = false): QueryBuilder
     {
+        $viewerId = $request->user('sanctum')?->id;
+
         $query = QueryBuilder::for(Task::query())
             ->allowedFilters(
                 AllowedFilter::callback('search', function (Builder $query, mixed $value): void {
@@ -411,22 +413,34 @@ class TaskController extends Controller
             $query->whereIn('status', [TaskStatus::Open->value, TaskStatus::Full->value]);
         }
 
-        return $query
-            ->with([
-                'uploader' => fn (BelongsTo $query) => $query
-                    ->withAvg('reviewsReceived', 'rating')
-                    ->withCount('reviewsReceived'),
-                'applications' => fn (HasMany $query) => $query->where('user_id', $request->user()->id),
-            ])
-            ->withCount([
-                'applications',
-                'applications as accepted_applications_count' => fn (Builder $query) => $query
-                    ->where('status', ApplicationStatus::Accepted->value),
-                'applications as pending_applications_count' => fn (Builder $query) => $query
-                    ->where('status', ApplicationStatus::Pending->value),
-                'reviews as my_reviews_count' => fn (Builder $query) => $query
-                    ->where('reviewer_id', $request->user()->id),
+        $query->with([
+            'uploader' => fn (BelongsTo $query) => $query
+                ->withAvg('reviewsReceived', 'rating')
+                ->withCount('reviewsReceived'),
+        ]);
+
+        if ($viewerId !== null) {
+            $query->with([
+                'applications' => fn (HasMany $query) => $query->where('user_id', $viewerId),
             ]);
+        }
+
+        $query->withCount([
+            'applications',
+            'applications as accepted_applications_count' => fn (Builder $query) => $query
+                ->where('status', ApplicationStatus::Accepted->value),
+            'applications as pending_applications_count' => fn (Builder $query) => $query
+                ->where('status', ApplicationStatus::Pending->value),
+        ]);
+
+        if ($viewerId !== null) {
+            $query->withCount([
+                'reviews as my_reviews_count' => fn (Builder $query) => $query
+                    ->where('reviewer_id', $viewerId),
+            ]);
+        }
+
+        return $query;
     }
 
     /**
@@ -434,20 +448,36 @@ class TaskController extends Controller
      */
     private function loadRelations(Task $task, Request $request): Task
     {
-        return $task->load([
+        $viewerId = $request->user('sanctum')?->id;
+
+        $task->load([
             'uploader' => fn (BelongsTo $query) => $query
                 ->withAvg('reviewsReceived', 'rating')
                 ->withCount('reviewsReceived'),
-            'applications' => fn (HasMany $query) => $query->where('user_id', $request->user()->id),
-        ])->loadCount([
+        ]);
+
+        if ($viewerId !== null) {
+            $task->load([
+                'applications' => fn (HasMany $query) => $query->where('user_id', $viewerId),
+            ]);
+        }
+
+        $task->loadCount([
             'applications',
             'applications as accepted_applications_count' => fn (Builder $query) => $query
                 ->where('status', ApplicationStatus::Accepted->value),
             'applications as pending_applications_count' => fn (Builder $query) => $query
                 ->where('status', ApplicationStatus::Pending->value),
-            'reviews as my_reviews_count' => fn (Builder $query) => $query
-                ->where('reviewer_id', $request->user()->id),
         ]);
+
+        if ($viewerId !== null) {
+            $task->loadCount([
+                'reviews as my_reviews_count' => fn (Builder $query) => $query
+                    ->where('reviewer_id', $viewerId),
+            ]);
+        }
+
+        return $task;
     }
 
     /**

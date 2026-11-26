@@ -32,6 +32,12 @@ Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'redirect'
 Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'callback'])
     ->name('social.callback');
 
+Route::middleware('throttle:60,1')->group(function () {
+    Route::get('/tasks', [TaskController::class, 'index']);
+    Route::get('/tasks/{task}', [TaskController::class, 'show']);
+    Route::get('/tasks/{task}/team', [TaskController::class, 'team']);
+});
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me']);
@@ -59,11 +65,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users/{user}/reviews', [ReviewController::class, 'forUser']);
     Route::get('/users/{user}', [ProfileController::class, 'show']);
 
-    Route::get('/tasks', [TaskController::class, 'index']);
     Route::get('/my/tasks', [TaskController::class, 'myTasks']);
     Route::post('/tasks', [TaskController::class, 'store']);
-    Route::get('/tasks/{task}', [TaskController::class, 'show']);
-    Route::get('/tasks/{task}/team', [TaskController::class, 'team']);
     Route::patch('/tasks/{task}/start', [TaskController::class, 'start']);
     Route::patch('/tasks/{task}/complete', [TaskController::class, 'complete']);
     Route::get('/tasks/{task}/reviews/pending', [ReviewController::class, 'pending']);

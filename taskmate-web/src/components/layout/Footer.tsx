@@ -1,19 +1,32 @@
+import { Github } from "lucide-react"
 import { Link } from "react-router-dom"
 
 import { Logo } from "@/components/Logo"
+import { GITHUB_URL } from "@/lib/constants"
+import { useAuthStore } from "@/stores/useAuthStore"
 
-const footerLinks = [
-  { to: "/", label: "Home" },
-  { to: "/profile", label: "Profile" },
-  { to: "/verify-email", label: "Verify email" },
+const guestLinks = [
+  { to: "/tasks", label: "Browse tasks" },
+  { to: "/#how-it-works", label: "How it works" },
+  { to: "/login", label: "Log in" },
+  { to: "/register", label: "Sign up" },
 ]
 
-const currentYear = new Date().getFullYear()
+const memberLinks = [
+  { to: "/tasks", label: "Browse tasks" },
+  { to: "/my-tasks", label: "My tasks" },
+  { to: "/my-applications", label: "My applications" },
+  { to: "/points", label: "Points" },
+]
 
 export function Footer() {
+  const user = useAuthStore((state) => state.user)
+  const links = user ? memberLinks : guestLinks
+  const currentYear = new Date().getFullYear()
+
   return (
     <footer className="border-t border-border bg-card">
-      <div className="mx-auto w-full max-w-5xl px-4 py-10">
+      <div className="mx-auto w-full max-w-6xl px-4 py-10">
         <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
           <div className="max-w-sm space-y-3">
             <Link
@@ -23,17 +36,14 @@ export function Footer() {
               <Logo />
             </Link>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              Find your next team and build something real together. Set up your
-              profile, share your skills, and start collaborating.
+              A place to find teammates and finish tasks together.
             </p>
           </div>
 
           <nav aria-label="Footer" className="flex flex-col gap-3">
-            <span className="text-xs font-semibold uppercase tracking-wider text-foreground">
-              Explore
-            </span>
+            <span className="text-sm font-medium text-foreground">Explore</span>
             <ul className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-              {footerLinks.map((link) => (
+              {links.map((link) => (
                 <li key={link.to}>
                   <Link
                     to={link.to}
@@ -43,16 +53,25 @@ export function Footer() {
                   </Link>
                 </li>
               ))}
+              {GITHUB_URL ? (
+                <li>
+                  <a
+                    href={GITHUB_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                  >
+                    <Github className="size-4" />
+                    GitHub
+                  </a>
+                </li>
+              ) : null}
             </ul>
           </nav>
         </div>
 
-        <div className="mt-8 flex flex-col gap-2 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <span>© {currentYear} TaskMate. All rights reserved.</span>
-          <span className="flex items-center gap-1.5">
-            <span className="size-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
-            Built for teamwork.
-          </span>
+        <div className="mt-8 border-t border-border pt-6 text-xs text-muted-foreground">
+          <span>&copy; {currentYear} TaskMate. All rights reserved.</span>
         </div>
       </div>
     </footer>

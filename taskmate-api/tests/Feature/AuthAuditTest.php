@@ -21,6 +21,9 @@ it('requires sanctum authentication on every api route except the documented pub
         'GET api/v1/auth/{provider}/redirect',
         'GET api/v1/auth/{provider}/callback',
         'GET api/v1/health',
+        'GET api/v1/tasks',
+        'GET api/v1/tasks/{task}',
+        'GET api/v1/tasks/{task}/team',
     ];
 
     $apiRoutes = collect(Route::getRoutes())

@@ -91,8 +91,13 @@ it('keeps the team query count bounded', function () {
     expect($queries)->toBeLessThanOrEqual(5);
 });
 
-it('requires authentication to view a team', function () {
-    $task = Task::factory()->open()->create();
+it('allows guests to view a team', function () {
+    $task = Task::factory()->open()->create(['team_size' => 3]);
+    Application::factory()->accepted()->create(['task_id' => $task->id]);
 
-    $this->getJson("/api/v1/tasks/{$task->id}/team")->assertUnauthorized();
+    $this->getJson("/api/v1/tasks/{$task->id}/team")
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('meta.team_size', 3)
+        ->assertJsonPath('meta.accepted_count', 1);
 });

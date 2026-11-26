@@ -94,7 +94,8 @@ export interface Task {
   can_complete: boolean
   can_leave: boolean
   is_participant: boolean
-  pending_reviews_count: number
+  /** Null for guests on the public task routes. */
+  pending_reviews_count: number | null
   applications_count?: number
   pending_count?: number
   uploader?: TaskUploader
