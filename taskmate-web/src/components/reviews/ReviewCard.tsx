@@ -12,9 +12,9 @@ export function ReviewCard({ review }: { review: Review }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2.5">
           <Avatar className="size-8 shrink-0">
-            {review.reviewer.avatar ? (
+            {review.reviewer.avatar_url ? (
               <AvatarImage
-                src={review.reviewer.avatar}
+                src={review.reviewer.avatar_url}
                 alt={review.reviewer.name}
               />
             ) : null}

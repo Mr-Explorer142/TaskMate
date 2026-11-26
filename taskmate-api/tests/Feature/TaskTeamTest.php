@@ -51,7 +51,7 @@ it('lists only accepted team members with public fields and meta', function () {
         ->assertJsonPath('data.1.id', $second->id);
 
     expect($response->json('data.0'))->toHaveKeys([
-        'id', 'name', 'avatar', 'bio', 'skills', 'average_rating', 'accepted_at',
+        'id', 'name', 'avatar_url', 'bio', 'skills', 'average_rating', 'accepted_at',
     ])
         ->not->toHaveKey('email')
         ->not->toHaveKey('cv_path')

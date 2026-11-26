@@ -20,7 +20,7 @@ class PublicUserResource extends JsonResource
             'country' => $this->country,
             'bio' => $this->bio,
             'skills' => $this->skills ?? [],
-            'avatar' => $this->avatar,
+            'avatar_url' => $this->avatar_url,
             'average_rating' => $this->average_rating,
             'reviews_count' => (int) ($this->reviews_received_count ?? 0),
             'has_cv' => $this->has_cv,

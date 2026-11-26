@@ -34,7 +34,7 @@ it('never exposes private fields on another user\'s profile', function () {
         ->and($payload)->not->toHaveKey('cv_path')
         ->and($payload)->not->toHaveKey('points_balance')
         ->and($payload)->toHaveKeys([
-            'id', 'name', 'bio', 'skills', 'avatar', 'average_rating', 'has_cv', 'profile_links', 'created_at',
+            'id', 'name', 'bio', 'skills', 'avatar_url', 'average_rating', 'has_cv', 'profile_links', 'created_at',
         ]);
 });
 

@@ -25,7 +25,7 @@ return [
     |
     */
 
-    'cv_disk' => env('CV_DISK', 'local'),
+    'cv_disk' => env('CV_DISK', 'r2'),
 
     /*
     |--------------------------------------------------------------------------
@@ -41,12 +41,10 @@ return [
 
     'cv_max_kb' => (int) env('TASKMATE_CV_MAX_KB', 5120),
 
-    'cv_mimes' => ['pdf', 'doc', 'docx'],
+    'cv_mimes' => ['pdf'],
 
     'cv_mimetypes' => [
         'application/pdf',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     ],
 
 ];

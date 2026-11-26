@@ -17,7 +17,7 @@ class TeamMemberResource extends JsonResource
         return [
             'id' => $this->user->id,
             'name' => $this->user->name,
-            'avatar' => $this->user->avatar,
+            'avatar_url' => $this->user->avatar_url,
             'bio' => $this->user->bio,
             'skills' => $this->user->skills ?? [],
             'average_rating' => $this->user->average_rating,

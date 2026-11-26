@@ -23,7 +23,7 @@ class ReviewResource extends JsonResource
             'reviewer' => $this->whenLoaded('reviewer', fn () => [
                 'id' => $this->reviewer->id,
                 'name' => $this->reviewer->name,
-                'avatar' => $this->reviewer->avatar,
+                'avatar_url' => $this->reviewer->avatar_url,
             ]),
             'task' => $this->whenLoaded('task', fn () => [
                 'id' => $this->task->id,

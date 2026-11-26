@@ -31,8 +31,8 @@ export function ConversationItem({
       ].join(" ")}
     >
       <Avatar className="size-10 shrink-0">
-        {other?.avatar ? (
-          <AvatarImage src={other.avatar} alt={other.name} />
+        {other?.avatar_url ? (
+          <AvatarImage src={other.avatar_url} alt={other.name} />
         ) : null}
         <AvatarFallback className="bg-secondary text-xs font-semibold text-secondary-foreground">
           {getInitials(other?.name ?? "TaskMate")}

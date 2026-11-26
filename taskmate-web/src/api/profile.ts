@@ -20,6 +20,11 @@ export interface LinkPayload {
   platform?: LinkPlatform | null
 }
 
+export interface CvLink {
+  url: string
+  expires_in: number
+}
+
 export async function updateProfile(payload: UpdateProfilePayload): Promise<User> {
   const { data } = await api.put<ApiEnvelope<User>>("/profile", payload)
   return data.data
@@ -27,6 +32,29 @@ export async function updateProfile(payload: UpdateProfilePayload): Promise<User
 
 export async function getUser(id: number): Promise<PublicUser> {
   const { data } = await api.get<ApiEnvelope<PublicUser>>(`/users/${id}`)
+  return data.data
+}
+
+export async function uploadAvatar(
+  file: File,
+  onProgress?: (percent: number) => void
+): Promise<User> {
+  const formData = new FormData()
+  formData.append("avatar", file)
+
+  const { data } = await api.post<ApiEnvelope<User>>("/profile/avatar", formData, {
+    onUploadProgress: (event) => {
+      if (event.total) {
+        onProgress?.(Math.round((event.loaded * 100) / event.total))
+      }
+    },
+  })
+
+  return data.data
+}
+
+export async function deleteAvatar(): Promise<User> {
+  const { data } = await api.delete<ApiEnvelope<User>>("/profile/avatar")
   return data.data
 }
 
@@ -53,38 +81,9 @@ export async function deleteCv(): Promise<User> {
   return data.data
 }
 
-function filenameFromDisposition(disposition: string | undefined): string | null {
-  if (!disposition) {
-    return null
-  }
-
-  const encoded = disposition.match(/filename\*=UTF-8''([^;]+)/i)
-
-  if (encoded?.[1]) {
-    try {
-      return decodeURIComponent(encoded[1])
-    } catch {
-      return encoded[1]
-    }
-  }
-
-  const plain = disposition.match(/filename="?([^";]+)"?/i)
-  return plain?.[1] ?? null
-}
-
-export async function downloadCv(
-  userId: number
-): Promise<{ blob: Blob; filename: string }> {
-  const response = await api.get<Blob>(`/users/${userId}/cv`, {
-    responseType: "blob",
-  })
-
-  const disposition = response.headers["content-disposition"] as string | undefined
-
-  return {
-    blob: response.data,
-    filename: filenameFromDisposition(disposition) ?? `cv-${userId}.pdf`,
-  }
+export async function getCvLink(userId: number): Promise<CvLink> {
+  const { data } = await api.get<ApiEnvelope<CvLink>>(`/users/${userId}/cv`)
+  return data.data
 }
 
 export async function listLinks(): Promise<ProfileLink[]> {

@@ -1,9 +1,9 @@
 import { useState } from "react"
-import { Download, FileText, Loader2, Star } from "lucide-react"
+import { ExternalLink, FileText, Loader2, Star } from "lucide-react"
 import { toast } from "sonner"
 
 import { getApiErrorMessage } from "@/api/client"
-import { downloadCv } from "@/api/profile"
+import { getCvLink } from "@/api/profile"
 import { CountryFlag } from "@/components/CountryFlag"
 import { PlatformIcon } from "@/components/profile/PlatformIcon"
 import { ReviewsReceived } from "@/components/reviews/ReviewsReceived"
@@ -20,23 +20,23 @@ import {
 import { EmptyState } from "@/components/PageStates"
 import { formatMonthYear, formatRatingLabel } from "@/lib/format"
 import { platformLabel } from "@/lib/platform"
-import { saveBlob } from "@/lib/download"
+import { openInNewTab } from "@/lib/download"
 import { getInitials } from "@/lib/utils"
 import type { PublicUser } from "@/types"
 
 export function ProfileView({ user }: { user: PublicUser }) {
-  const [downloading, setDownloading] = useState(false)
+  const [viewingCv, setViewingCv] = useState(false)
 
-  async function handleDownloadCv() {
-    setDownloading(true)
+  async function handleViewCv() {
+    setViewingCv(true)
 
     try {
-      const { blob, filename } = await downloadCv(user.id)
-      saveBlob(blob, filename)
+      const link = await getCvLink(user.id)
+      openInNewTab(link.url)
     } catch (error) {
       toast.error(getApiErrorMessage(error))
     } finally {
-      setDownloading(false)
+      setViewingCv(false)
     }
   }
 
@@ -45,8 +45,8 @@ export function ProfileView({ user }: { user: PublicUser }) {
       <Card>
         <CardContent className="flex flex-col gap-5 pt-4 sm:flex-row sm:items-start">
           <Avatar className="size-16 shrink-0">
-            {user.avatar ? (
-              <AvatarImage src={user.avatar} alt={user.name} />
+            {user.avatar_url ? (
+              <AvatarImage src={user.avatar_url} alt={user.name} />
             ) : null}
             <AvatarFallback className="bg-secondary text-lg font-semibold text-secondary-foreground">
               {getInitials(user.name)}
@@ -85,15 +85,15 @@ export function ProfileView({ user }: { user: PublicUser }) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => void handleDownloadCv()}
-              disabled={downloading}
+              onClick={() => void handleViewCv()}
+              disabled={viewingCv}
             >
-              {downloading ? (
+              {viewingCv ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
-                <Download className="size-4" />
+                <ExternalLink className="size-4" />
               )}
-              {downloading ? "Downloading..." : "Download CV"}
+              {viewingCv ? "Opening..." : "View CV"}
             </Button>
           ) : null}
         </CardContent>

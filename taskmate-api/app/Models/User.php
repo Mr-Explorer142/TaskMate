@@ -20,6 +20,8 @@ use Laravel\Sanctum\HasApiTokens;
     'bio',
     'skills',
     'avatar',
+    'avatar_public_id',
+    'avatar_url',
 ])]
 #[Hidden(['password', 'remember_token', 'cv_path'])]
 class User extends Authenticatable
@@ -113,6 +115,26 @@ class User extends Authenticatable
                 $average = $this->attributes['reviews_received_avg_rating'];
 
                 return $average === null ? null : round((float) $average, 2);
+            },
+        );
+    }
+
+    /**
+     * The Cloudinary avatar URL, falling back to a legacy social avatar.
+     */
+    protected function avatarUrl(): Attribute
+    {
+        return Attribute::make(
+            get: function (): ?string {
+                $avatarUrl = $this->attributes['avatar_url'] ?? null;
+
+                if (filled($avatarUrl)) {
+                    return (string) $avatarUrl;
+                }
+
+                $legacyAvatar = $this->attributes['avatar'] ?? null;
+
+                return filled($legacyAvatar) ? (string) $legacyAvatar : null;
             },
         );
     }

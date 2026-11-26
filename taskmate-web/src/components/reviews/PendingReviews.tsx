@@ -100,8 +100,8 @@ export function PendingReviews({
               >
                 <div className="flex min-w-0 items-center gap-2.5">
                   <Avatar className="size-8">
-                    {member.avatar ? (
-                      <AvatarImage src={member.avatar} alt={member.name} />
+                    {member.avatar_url ? (
+                      <AvatarImage src={member.avatar_url} alt={member.name} />
                     ) : null}
                     <AvatarFallback className="bg-secondary text-xs font-semibold text-secondary-foreground">
                       {getInitials(member.name)}

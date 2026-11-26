@@ -149,7 +149,7 @@ it('does not leak private applicant fields', function () {
     $applicantPayload = $response->json('data.0.applicant');
 
     expect($applicantPayload)->toHaveKeys([
-        'id', 'name', 'avatar', 'bio', 'skills', 'average_rating', 'has_cv', 'profile_links',
+        'id', 'name', 'avatar_url', 'bio', 'skills', 'average_rating', 'has_cv', 'profile_links',
     ])
         ->not->toHaveKey('email')
         ->not->toHaveKey('cv_path')

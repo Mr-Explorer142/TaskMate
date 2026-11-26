@@ -172,7 +172,7 @@ it('lists the participants a reviewer still needs to review', function () {
         ->assertJsonCount(2, 'data')
         ->assertJsonPath('data.0.id', $members[0]->id)
         ->assertJsonPath('data.0.name', $members[0]->name)
-        ->assertJsonPath('data.0.avatar', $members[0]->avatar)
+        ->assertJsonPath('data.0.avatar_url', $members[0]->avatar_url)
         ->assertJsonPath('data.1.id', $members[1]->id);
 
     submitReview($this, $task, $owner, $members[0])->assertCreated();

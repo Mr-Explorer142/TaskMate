@@ -35,8 +35,8 @@ class ConversationController extends Controller
             })
             ->with([
                 'task:id,title',
-                'userOne:id,name,avatar',
-                'userTwo:id,name,avatar',
+                'userOne:id,name,avatar,avatar_url',
+                'userTwo:id,name,avatar,avatar_url',
                 'lastMessage',
             ])
             ->withCount([
@@ -242,8 +242,8 @@ class ConversationController extends Controller
         return $conversation
             ->load([
                 'task:id,title',
-                'userOne:id,name,avatar',
-                'userTwo:id,name,avatar',
+                'userOne:id,name,avatar,avatar_url',
+                'userTwo:id,name,avatar,avatar_url',
                 'lastMessage',
             ])
             ->loadCount([

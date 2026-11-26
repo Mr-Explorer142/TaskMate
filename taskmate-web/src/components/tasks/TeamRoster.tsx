@@ -60,8 +60,8 @@ export function TeamRoster({
               className="flex min-w-0 items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:border-primary/40"
             >
               <Avatar className="size-10 shrink-0">
-                {member.avatar ? (
-                  <AvatarImage src={member.avatar} alt={member.name} />
+                {member.avatar_url ? (
+                  <AvatarImage src={member.avatar_url} alt={member.name} />
                 ) : null}
                 <AvatarFallback className="bg-secondary text-sm font-semibold text-secondary-foreground">
                   {getInitials(member.name)}

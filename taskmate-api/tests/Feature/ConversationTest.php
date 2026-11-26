@@ -202,7 +202,7 @@ it('orders conversations by last message and reports unread counts', function ()
         ->assertJsonPath('data.1.unread_count', 1)
         ->assertJsonPath('data.1.other_user.id', $firstPartner->id);
 
-    expect($response->json('data.1.other_user'))->toHaveKeys(['id', 'name', 'avatar'])
+    expect($response->json('data.1.other_user'))->toHaveKeys(['id', 'name', 'avatar_url'])
         ->and($response->json('data.1.other_user'))->not->toHaveKey('email')
         ->and($response->json('data.1.other_user'))->not->toHaveKey('points_balance');
 });

@@ -6,8 +6,9 @@ import { me } from "@/api/auth"
 import { CountryFlag } from "@/components/CountryFlag"
 import { ErrorState } from "@/components/PageStates"
 import { PageLoadingSkeleton } from "@/components/ProtectedRoute"
+import { AvatarUpload } from "@/components/profile/AvatarUpload"
 import { BasicInfoCard } from "@/components/profile/BasicInfoCard"
-import { CvCard } from "@/components/profile/CvCard"
+import { CvUpload } from "@/components/profile/CvUpload"
 import { LinksCard } from "@/components/profile/LinksCard"
 import { ReviewsReceived } from "@/components/reviews/ReviewsReceived"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -56,7 +57,7 @@ export function ProfilePage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <Avatar className="size-12">
-            {user.avatar ? <AvatarImage src={user.avatar} alt={user.name} /> : null}
+            {user.avatar_url ? <AvatarImage src={user.avatar_url} alt={user.name} /> : null}
             <AvatarFallback className="bg-secondary font-semibold text-secondary-foreground">
               {getInitials(user.name)}
             </AvatarFallback>
@@ -86,8 +87,9 @@ export function ProfilePage() {
         </Button>
       </div>
 
+      <AvatarUpload user={user} />
       <BasicInfoCard user={user} />
-      <CvCard user={user} />
+      <CvUpload user={user} />
       <LinksCard />
       <ReviewsReceived userId={user.id} />
     </div>

@@ -1,9 +1,9 @@
 import { useRef, useState } from "react"
-import { Download, FileText, Loader2, Trash2, Upload } from "lucide-react"
+import { ExternalLink, FileText, Loader2, Trash2, Upload } from "lucide-react"
 import { toast } from "sonner"
 
+import { deleteCv, getCvLink, uploadCv } from "@/api/profile"
 import { getApiErrorMessage } from "@/api/client"
-import { deleteCv, downloadCv, uploadCv } from "@/api/profile"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,19 +22,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { useAuthStore } from "@/stores/useAuthStore"
-import { saveBlob } from "@/lib/download"
+import { openInNewTab } from "@/lib/download"
 import { formatDate } from "@/lib/format"
+import { useAuthStore } from "@/stores/useAuthStore"
 import type { User } from "@/types"
 
 const MAX_BYTES = 5 * 1024 * 1024
-const ALLOWED_EXTENSIONS = ["pdf", "doc", "docx"]
 
-export function CvCard({ user }: { user: User }) {
+export function CvUpload({ user }: { user: User }) {
   const setUser = useAuthStore((state) => state.setUser)
   const inputRef = useRef<HTMLInputElement>(null)
   const [progress, setProgress] = useState<number | null>(null)
-  const [downloading, setDownloading] = useState(false)
+  const [viewing, setViewing] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -47,10 +46,8 @@ export function CvCard({ user }: { user: User }) {
   }
 
   async function handleFile(file: File) {
-    const extension = file.name.split(".").pop()?.toLowerCase() ?? ""
-
-    if (!ALLOWED_EXTENSIONS.includes(extension)) {
-      setError("Upload a PDF, DOC, or DOCX file.")
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+      setError("Choose a PDF file.")
       return
     }
 
@@ -63,7 +60,7 @@ export function CvCard({ user }: { user: User }) {
     setProgress(0)
 
     try {
-      const updated = await uploadCv(file, (percent) => setProgress(percent))
+      const updated = await uploadCv(file, setProgress)
       setUser(updated)
       toast.success(user.has_cv ? "CV replaced." : "CV uploaded.")
     } catch (uploadError) {
@@ -76,16 +73,16 @@ export function CvCard({ user }: { user: User }) {
     }
   }
 
-  async function handleDownload() {
-    setDownloading(true)
+  async function handleView() {
+    setViewing(true)
 
     try {
-      const { blob, filename } = await downloadCv(user.id)
-      saveBlob(blob, filename)
-    } catch (downloadError) {
-      toast.error(getApiErrorMessage(downloadError))
+      const link = await getCvLink(user.id)
+      openInNewTab(link.url)
+    } catch (viewError) {
+      toast.error(getApiErrorMessage(viewError))
     } finally {
-      setDownloading(false)
+      setViewing(false)
     }
   }
 
@@ -95,8 +92,8 @@ export function CvCard({ user }: { user: User }) {
     try {
       const updated = await deleteCv()
       setUser(updated)
-      toast.success("CV deleted.")
       setConfirmOpen(false)
+      toast.success("CV deleted.")
     } catch (deleteError) {
       toast.error(getApiErrorMessage(deleteError))
     } finally {
@@ -109,14 +106,15 @@ export function CvCard({ user }: { user: User }) {
       <CardHeader>
         <CardTitle>CV</CardTitle>
         <CardDescription>
-          PDF, DOC, or DOCX up to 5 MB. Only logged-in users can download it.
+          PDF only, up to 5 MB. Signed links last 10 minutes and are private to
+          you and task owners you applied to.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <input
           ref={inputRef}
           type="file"
-          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          accept=".pdf,application/pdf"
           className="hidden"
           onChange={(event) => {
             const file = event.target.files?.[0]
@@ -149,22 +147,22 @@ export function CvCard({ user }: { user: User }) {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => void handleDownload()}
-                disabled={downloading}
+                onClick={() => void handleView()}
+                disabled={viewing || uploading || deleting}
               >
-                {downloading ? (
+                {viewing ? (
                   <Loader2 className="size-4 animate-spin" />
                 ) : (
-                  <Download className="size-4" />
+                  <ExternalLink className="size-4" />
                 )}
-                {downloading ? "Downloading..." : "Download"}
+                {viewing ? "Opening..." : "View CV"}
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={openFilePicker}
-                disabled={uploading}
+                disabled={uploading || deleting}
               >
                 <Upload className="size-4" />
                 Replace
@@ -174,10 +172,10 @@ export function CvCard({ user }: { user: User }) {
                 variant="destructive"
                 size="sm"
                 onClick={() => setConfirmOpen(true)}
-                disabled={deleting}
+                disabled={uploading || deleting}
               >
                 <Trash2 className="size-4" />
-                Delete
+                Remove
               </Button>
             </div>
           </div>
@@ -185,7 +183,7 @@ export function CvCard({ user }: { user: User }) {
           <button
             type="button"
             onClick={openFilePicker}
-            disabled={uploading}
+            disabled={uploading || deleting}
             className="flex w-full flex-col items-center gap-2 rounded-lg border border-dashed border-border bg-background px-6 py-10 text-center transition-colors hover:border-primary/50 hover:bg-secondary/40 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <span className="flex size-10 items-center justify-center rounded-lg bg-secondary text-secondary-foreground">
@@ -193,7 +191,7 @@ export function CvCard({ user }: { user: User }) {
             </span>
             <span className="font-medium text-foreground">Upload your CV</span>
             <span className="text-sm text-muted-foreground">
-              Click to choose a file — PDF, DOC, or DOCX up to 5 MB
+              Click to choose a file — PDF up to 5 MB
             </span>
           </button>
         )}
@@ -219,7 +217,7 @@ export function CvCard({ user }: { user: User }) {
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete your CV?</AlertDialogTitle>
+            <AlertDialogTitle>Remove your CV?</AlertDialogTitle>
             <AlertDialogDescription>
               This removes the file from your profile. You can upload a new CV at
               any time.
@@ -235,7 +233,7 @@ export function CvCard({ user }: { user: User }) {
                 void handleDelete()
               }}
             >
-              {deleting ? "Deleting..." : "Delete CV"}
+              {deleting ? "Removing..." : "Remove CV"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

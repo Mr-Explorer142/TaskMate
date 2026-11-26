@@ -92,6 +92,7 @@ class SocialAuthController extends Controller
                 'email' => $email,
                 'password' => Str::random(40),
                 'avatar' => $socialiteUser->getAvatar(),
+                'avatar_url' => $socialiteUser->getAvatar(),
             ]);
 
             $user->forceFill(['email_verified_at' => now()])->save();
@@ -101,8 +102,11 @@ class SocialAuthController extends Controller
                 (int) config('points.signup_bonus'),
                 'Welcome bonus',
             );
-        } elseif (blank($user->avatar) && filled($socialiteUser->getAvatar())) {
-            $user->update(['avatar' => $socialiteUser->getAvatar()]);
+        } elseif (blank($user->getRawOriginal('avatar_url')) && filled($socialiteUser->getAvatar())) {
+            $user->forceFill([
+                'avatar' => $socialiteUser->getAvatar(),
+                'avatar_url' => $socialiteUser->getAvatar(),
+            ])->save();
         }
 
         $user->socialAccounts()->create([

@@ -32,8 +32,8 @@ export function UserMenu({
           aria-label="Account menu"
         >
           <Avatar className="size-8">
-            {user.avatar ? (
-              <AvatarImage src={user.avatar} alt={user.name} />
+            {user.avatar_url ? (
+              <AvatarImage src={user.avatar_url} alt={user.name} />
             ) : null}
             <AvatarFallback className="bg-secondary text-xs font-semibold text-secondary-foreground">
               {getInitials(user.name)}

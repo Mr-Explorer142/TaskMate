@@ -38,7 +38,7 @@ export interface User {
   country: string | null
   bio: string | null
   skills: string[]
-  avatar: string | null
+  avatar_url: string | null
   has_cv: boolean
   cv_original_name: string | null
   cv_uploaded_at: string | null
@@ -56,7 +56,7 @@ export interface PublicUser {
   country: string | null
   bio: string | null
   skills: string[]
-  avatar: string | null
+  avatar_url: string | null
   average_rating: number | null
   reviews_count: number
   has_cv: boolean
@@ -69,7 +69,7 @@ export type TaskSort = "-created_at" | "-reward" | "deadline" | "team_size"
 export interface TaskUploader {
   id: number
   name: string
-  avatar: string | null
+  avatar_url: string | null
   average_rating: number | null
   reviews_count: number
 }
@@ -153,7 +153,7 @@ export interface Paginated<T> {
 export interface ApplicationApplicant {
   id: number
   name: string
-  avatar: string | null
+  avatar_url: string | null
   bio: string | null
   skills: string[]
   average_rating: number | null
@@ -187,7 +187,7 @@ export interface Application {
 export interface TeamMember {
   id: number
   name: string
-  avatar: string | null
+  avatar_url: string | null
   bio: string | null
   skills: string[]
   average_rating: number | null
@@ -209,7 +209,7 @@ export interface Team {
 export interface PendingReviewee {
   id: number
   name: string
-  avatar: string | null
+  avatar_url: string | null
 }
 
 export interface ReviewSummary {
@@ -221,7 +221,7 @@ export interface ReviewSummary {
 export interface ReviewReviewer {
   id: number
   name: string
-  avatar: string | null
+  avatar_url: string | null
 }
 
 export interface ReviewTask {
@@ -252,7 +252,7 @@ export type ReviewFormPayload = Omit<ReviewPayload, "reviewee_id">
 export interface ConversationOtherUser {
   id: number
   name: string
-  avatar: string | null
+  avatar_url: string | null
 }
 
 export interface ConversationTask {

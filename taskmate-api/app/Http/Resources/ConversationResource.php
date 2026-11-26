@@ -33,7 +33,7 @@ class ConversationResource extends JsonResource
             'other_user' => $otherUser === null ? null : [
                 'id' => $otherUser->id,
                 'name' => $otherUser->name,
-                'avatar' => $otherUser->avatar,
+                'avatar_url' => $otherUser->avatar_url,
             ],
             'last_message' => $this->whenLoaded('lastMessage', fn () => $this->lastMessage === null ? null : [
                 'id' => $this->lastMessage->id,

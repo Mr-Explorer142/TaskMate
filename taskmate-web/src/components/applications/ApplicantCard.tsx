@@ -1,15 +1,10 @@
 import { useState } from "react"
-import {
-  Download,
-  ExternalLink,
-  Loader2,
-  Star,
-} from "lucide-react"
+import { ExternalLink, Loader2, Star } from "lucide-react"
 import { Link } from "react-router-dom"
 import { toast } from "sonner"
 
 import { getApiErrorMessage } from "@/api/client"
-import { downloadCv } from "@/api/profile"
+import { getCvLink } from "@/api/profile"
 import { ApplicationStatusBadge } from "@/components/applications/ApplicationStatusBadge"
 import { MessageButton } from "@/components/chat/MessageButton"
 import { PlatformIcon } from "@/components/profile/PlatformIcon"
@@ -28,7 +23,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { formatPostedDate, formatRatingLabel } from "@/lib/format"
-import { saveBlob } from "@/lib/download"
+import { openInNewTab } from "@/lib/download"
 import { platformLabel } from "@/lib/platform"
 import { getInitials } from "@/lib/utils"
 import type { Application } from "@/types"
@@ -53,23 +48,23 @@ export function ApplicantCard({
   onReject: (id: number) => void
 }) {
   const applicant = application.applicant
-  const [downloading, setDownloading] = useState(false)
+  const [viewingCv, setViewingCv] = useState(false)
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null)
 
-  async function handleDownloadCv() {
+  async function handleViewCv() {
     if (!applicant) {
       return
     }
 
-    setDownloading(true)
+    setViewingCv(true)
 
     try {
-      const { blob, filename } = await downloadCv(applicant.id)
-      saveBlob(blob, filename)
+      const link = await getCvLink(applicant.id)
+      openInNewTab(link.url)
     } catch (error) {
       toast.error(getApiErrorMessage(error))
     } finally {
-      setDownloading(false)
+      setViewingCv(false)
     }
   }
 
@@ -92,8 +87,8 @@ export function ApplicantCard({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex min-w-0 items-start gap-3">
             <Avatar className="size-11 shrink-0">
-              {applicant?.avatar ? (
-                <AvatarImage src={applicant.avatar} alt={applicant.name} />
+              {applicant?.avatar_url ? (
+                <AvatarImage src={applicant.avatar_url} alt={applicant.name} />
               ) : null}
               <AvatarFallback className="bg-secondary text-sm font-semibold text-secondary-foreground">
                 {getInitials(applicant?.name ?? "Applicant")}
@@ -189,15 +184,15 @@ export function ApplicantCard({
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => void handleDownloadCv()}
-              disabled={downloading}
+              onClick={() => void handleViewCv()}
+              disabled={viewingCv}
             >
-              {downloading ? (
+              {viewingCv ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
-                <Download className="size-4" />
+                <ExternalLink className="size-4" />
               )}
-              {downloading ? "Downloading..." : "Download CV"}
+              {viewingCv ? "Opening..." : "View CV"}
             </Button>
           ) : null}
 

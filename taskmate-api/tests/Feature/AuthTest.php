@@ -111,7 +111,8 @@ it('returns the authenticated user with their links', function () {
     $response->assertOk()
         ->assertJsonPath('data.id', $user->id)
         ->assertJsonCount(1, 'data.profile_links')
-        ->assertJsonMissingPath('data.cv_path');
+        ->assertJsonMissingPath('data.cv_path')
+        ->assertJsonMissingPath('data.avatar_public_id');
 });
 
 it('revokes the current token on logout', function () {

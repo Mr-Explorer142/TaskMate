@@ -74,7 +74,7 @@ class TaskController extends Controller
         $members = $task->acceptedApplications()
             ->with([
                 'user' => fn (BelongsTo $query) => $query
-                    ->select(['id', 'name', 'avatar', 'bio', 'skills'])
+                    ->select(['id', 'name', 'avatar', 'avatar_url', 'bio', 'skills'])
                     ->withAvg('reviewsReceived', 'rating')
                     ->withCount('reviewsReceived'),
             ])

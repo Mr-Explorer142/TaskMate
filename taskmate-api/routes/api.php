@@ -46,9 +46,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::put('/profile', [ProfileController::class, 'update']);
 
+    Route::post('/profile/avatar', [ProfileController::class, 'uploadAvatar'])
+        ->middleware('throttle:20,1');
+    Route::delete('/profile/avatar', [ProfileController::class, 'deleteAvatar'])
+        ->middleware('throttle:20,1');
+
     Route::post('/profile/cv', [ProfileController::class, 'uploadCv'])
         ->middleware('throttle:20,1');
-    Route::delete('/profile/cv', [ProfileController::class, 'deleteCv']);
+    Route::delete('/profile/cv', [ProfileController::class, 'deleteCv'])
+        ->middleware('throttle:20,1');
 
     Route::get('/profile/links', [ProfileLinkController::class, 'index']);
     Route::post('/profile/links', [ProfileLinkController::class, 'store']);
@@ -61,7 +67,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead']);
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead']);
 
-    Route::get('/users/{user}/cv', [ProfileController::class, 'downloadCv']);
+    Route::get('/users/{user}/cv', [ProfileController::class, 'viewCv'])
+        ->middleware('throttle:60,1');
     Route::get('/users/{user}/reviews', [ReviewController::class, 'forUser']);
     Route::get('/users/{user}', [ProfileController::class, 'show']);
 

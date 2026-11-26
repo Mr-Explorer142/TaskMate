@@ -45,7 +45,12 @@ class ReviewController extends Controller
             ->whereIn('id', $participantIds)
             ->whereKeyNot($viewerId)
             ->whereNotIn('id', $reviewedIds->all())
-            ->get(['id', 'name', 'avatar']);
+            ->get(['id', 'name', 'avatar', 'avatar_url'])
+            ->map(fn (User $user): array => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'avatar_url' => $user->avatar_url,
+            ]);
 
         return ApiResponse::success($pending);
     }
@@ -102,7 +107,7 @@ class ReviewController extends Controller
             $reviewerId,
         );
 
-        $review->load(['reviewer:id,name,avatar', 'task:id,title']);
+        $review->load(['reviewer:id,name,avatar,avatar_url', 'task:id,title']);
 
         return ApiResponse::success(new ReviewResource($review), 'Review submitted.', 201);
     }
@@ -114,7 +119,7 @@ class ReviewController extends Controller
     {
         $reviews = Review::query()
             ->where('reviewee_id', $user->id)
-            ->with(['reviewer:id,name,avatar', 'task:id,title'])
+            ->with(['reviewer:id,name,avatar,avatar_url', 'task:id,title'])
             ->latest('created_at')
             ->latest('id')
             ->paginate(10);

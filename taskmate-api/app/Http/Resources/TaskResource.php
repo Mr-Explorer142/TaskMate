@@ -56,7 +56,7 @@ class TaskResource extends JsonResource
             'uploader' => $this->whenLoaded('uploader', fn () => [
                 'id' => $this->uploader->id,
                 'name' => $this->uploader->name,
-                'avatar' => $this->uploader->avatar,
+                'avatar_url' => $this->uploader->avatar_url,
                 'average_rating' => $this->uploader->average_rating,
                 'reviews_count' => (int) ($this->uploader->reviews_received_count ?? 0),
             ]),

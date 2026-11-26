@@ -22,7 +22,7 @@ class UserResource extends JsonResource
             'country' => $this->country,
             'bio' => $this->bio,
             'skills' => $this->skills ?? [],
-            'avatar' => $this->avatar,
+            'avatar_url' => $this->avatar_url,
             'has_cv' => $this->has_cv,
             'cv_original_name' => $this->cv_original_name,
             'cv_uploaded_at' => $this->cv_uploaded_at?->toIso8601String(),

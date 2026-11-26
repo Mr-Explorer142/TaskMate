@@ -46,8 +46,8 @@ export function TaskCard({
           </Link>
           <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
             <Avatar className="size-5">
-              {task.uploader?.avatar ? (
-                <AvatarImage src={task.uploader.avatar} alt={task.uploader.name} />
+              {task.uploader?.avatar_url ? (
+                <AvatarImage src={task.uploader.avatar_url} alt={task.uploader.name} />
               ) : null}
               <AvatarFallback className="bg-secondary text-[10px] font-semibold text-secondary-foreground">
                 {getInitials(task.uploader?.name ?? "TaskMate")}

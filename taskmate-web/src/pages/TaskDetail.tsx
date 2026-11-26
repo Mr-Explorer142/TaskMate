@@ -332,8 +332,8 @@ export function TaskDetailPage() {
   const uploaderSummary = task.uploader ? (
     <>
       <Avatar className="size-11">
-        {task.uploader.avatar ? (
-          <AvatarImage src={task.uploader.avatar} alt={task.uploader.name} />
+        {task.uploader.avatar_url ? (
+          <AvatarImage src={task.uploader.avatar_url} alt={task.uploader.name} />
         ) : null}
         <AvatarFallback className="bg-secondary text-sm font-semibold text-secondary-foreground">
           {getInitials(task.uploader.name)}

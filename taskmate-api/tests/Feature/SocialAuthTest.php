@@ -45,6 +45,7 @@ it('creates a user from a social login and redirects with a token', function () 
 
     expect($user->name)->toBe('Jane Doe')
         ->and($user->avatar)->toBe('https://example.com/avatar.png')
+        ->and($user->avatar_url)->toBe('https://example.com/avatar.png')
         ->and($user->email_verified_at)->not->toBeNull()
         ->and($user->points_balance)->toBe((int) config('points.signup_bonus'))
         ->and($user->pointTransactions()->count())->toBe(1)

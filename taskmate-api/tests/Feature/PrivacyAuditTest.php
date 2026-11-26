@@ -15,6 +15,7 @@ function daySevenAssertNoPrivateUserData($response, User $other): void
         ->and($body)->not->toContain((string) $other->points_balance)
         ->and($body)->not->toContain('"password"')
         ->and($body)->not->toContain('"cv_path"')
+        ->and($body)->not->toContain('"avatar_public_id"')
         ->and($body)->not->toContain('"points_balance"');
 }
 
