@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { AlertCircle, Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
@@ -41,7 +41,6 @@ export function LoginPage() {
   const [submitting, setSubmitting] = useState(false)
 
   const redirect = searchParams.get("redirect")
-  const sessionExpired = searchParams.get("reason") === "session_expired"
   const targetRedirect =
     safeRedirect(redirect) ??
     safeRedirect((location.state as { from?: string } | null)?.from) ??
@@ -95,16 +94,6 @@ export function LoginPage() {
         </>
       }
     >
-      {sessionExpired ? (
-        <div
-          role="alert"
-          className="mb-4 flex gap-2 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm text-foreground"
-        >
-          <AlertCircle className="size-4 shrink-0 text-primary" />
-          <p>Your session expired. Please log in again.</p>
-        </div>
-      ) : null}
-
       <SocialAuthButtons redirect={targetRedirect} />
 
       <Form {...form}>

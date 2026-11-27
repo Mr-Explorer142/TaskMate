@@ -11,17 +11,22 @@ import { useChatStore } from "@/stores/useChatStore"
 
 export function AppLayout() {
   const token = useAuthStore((state) => state.token)
+  const isHydrating = useAuthStore((state) => state.isHydrating)
   const fetchUnreadCount = useChatStore((state) => state.fetchUnreadCount)
   const location = useLocation()
   const isHome = location.pathname === "/"
 
   useEffect(() => {
-    if (token) {
+    if (token && !isHydrating) {
       void fetchUnreadCount()
     }
-  }, [token, fetchUnreadCount])
+  }, [token, isHydrating, fetchUnreadCount])
 
-  usePolling(() => fetchUnreadCount(), 15_000, Boolean(token))
+  usePolling(
+    () => fetchUnreadCount(),
+    15_000,
+    Boolean(token) && !isHydrating
+  )
 
   return (
     <div className="flex min-h-screen flex-col bg-background">

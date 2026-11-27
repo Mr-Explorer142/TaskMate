@@ -61,13 +61,6 @@ api.interceptors.response.use(
 
     if (status === 401 && !isPublicAuthRequest(url)) {
       useAuthStore.getState().clearAuth()
-
-      if (typeof window !== "undefined" && window.location.pathname !== "/login") {
-        const current =
-          window.location.pathname + window.location.search + window.location.hash
-        const target = `/login?reason=session_expired&redirect=${encodeURIComponent(current)}`
-        window.location.assign(target)
-      }
     }
 
     if (status === 403) {
