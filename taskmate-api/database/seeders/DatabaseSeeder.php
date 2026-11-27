@@ -30,9 +30,89 @@ class DatabaseSeeder extends Seeder
      */
     private const TASK_SKILLS = [
         'Bookkeeping', 'Content Writing', 'Copywriting', 'Customer Support', 'Data Entry',
-        'Event Planning', 'Fundraising', 'Graphic Design', 'HR Admin', 'Lesson Planning',
-        'Legal Admin', 'Market Research', 'Photo Editing', 'Project Planning', 'Proofreading',
-        'Real Estate', 'Social Media', 'Survey Design', 'Translation', 'Video Editing',
+        'Event Planning', 'Fundraising', 'Grant Writing', 'Graphic Design', 'HR Admin',
+        'Lesson Planning', 'Legal Admin', 'Market Research', 'Music Editing', 'Photo Editing',
+        'Project Planning', 'Proofreading', 'Real Estate', 'Social Media', 'Survey Design',
+        'Translation', 'Travel Planning', 'Video Editing', 'Volunteer Coordination',
+    ];
+
+    /**
+     * Human application notes used by the demo seeder.
+     *
+     * @var array<int, string>
+     */
+    private const APPLICATION_MESSAGES = [
+        'I have handled a similar checklist before and can share a sample timeline today.',
+        'Happy to take the first pass on this. I usually send a short outline before the full draft.',
+        'I can start this evening. Could you share the reference files when you get a chance?',
+        'This matches the kind of work I do for local clubs, so I am confident I can help.',
+        'I would like to join the team. I can commit to two focused sessions before the deadline.',
+        'I have free time this week and can turn around edits quickly if you need them.',
+        'I can bring a fresh eye to the brief and will keep the handoff simple.',
+        'I have done the same kind of cleanup in past projects and can send examples on request.',
+    ];
+
+    /**
+     * Short, specific review comments used by the demo seeder.
+     *
+     * @var array<int, string>
+     */
+    private const REVIEW_COMMENTS = [
+        'Clear instructions and quick responses throughout.',
+        'Delivered on time and handled the changes without any fuss.',
+        'Great communication and a very tidy handoff.',
+        'Thoughtful work, especially the small details in the final file.',
+        'Friendly collaborator who kept the schedule on track.',
+        'Exactly what the brief asked for, with useful notes at the end.',
+        'Patient with questions and quick to help when I got stuck.',
+        'Reliable from kickoff to delivery. Would work together again.',
+    ];
+
+    /**
+     * Curated chat threads for demo conversations. {task} is replaced with the task title.
+     *
+     * @var array<int, array<int, string>>
+     */
+    private const CHAT_SCRIPTS = [
+        [
+            'Hi! I saw "{task}" and I think it is a good fit. Do you still have room on the team?',
+            'Hi! Yes, we do. I liked your profile, especially the project checklist experience.',
+            'Great. Could you share the deliverables and the deadline you have in mind?',
+            'Sure, I need a first draft by Thursday and the final files by Sunday. I can send the brief today.',
+            'That works. I can start tomorrow evening and send a short outline first.',
+            'Perfect. Please keep the outline to one page so it is easy to review.',
+            "Understood. I'll also flag anything that needs your input rather than guessing.",
+            "Appreciate that. I'm happy to answer questions as they come up.",
+            'One quick question: should the final handoff include source files, or is the PDF enough?',
+            'Please include both. The source file helps us make small edits later.',
+            "Got it. I'll send both formats with a short note about any assumptions.",
+        ],
+        [
+            'Hello! I just applied for "{task}" and wanted to introduce myself.',
+            'Thanks for applying! Could you tell me a little about your experience with this kind of work?',
+            'I have put together similar packs for community groups. I can share a sample if that helps.',
+            'That would be useful. What kind of turnaround would you need for the first draft?',
+            'Two days should be enough once I have the reference files and the preferred format.',
+            'Good to know. I can send the files tonight and we can keep feedback in one place.',
+            'Sounds simple. I will send questions in a single list so nothing gets lost.',
+            'Perfect. I would rather answer everything in one go too.',
+            'Before I start, do you want a short summary with the final version?',
+            'Yes, a short summary would be great. Three bullet points is plenty.',
+            "Thanks! I'll begin after the files arrive and post an update tomorrow.",
+        ],
+        [
+            'Hey, thanks for reaching out about "{task}". I am interested.',
+            'Great! I am mainly looking for someone comfortable with careful review and tidy notes.',
+            'That is my strength. I usually keep a short log of decisions as I go.',
+            'Nice. How much time do you think you can give it this week?',
+            'I can spare about six hours across Tuesday and Wednesday.',
+            'That works well. The first task is to review the provided material and mark anything unclear.',
+            'Understood. I will send a quick checkpoint after the first pass.',
+            'Appreciated. Please do not spend time polishing before the scope is agreed.',
+            'Got it. I will focus on structure and accuracy first.',
+            'Exactly. Once that is signed off, we can move to the final clean-up.',
+            "Thanks for the clear expectations. I'll send the checkpoint tomorrow morning.",
+        ],
     ];
 
     /**
@@ -160,6 +240,26 @@ class DatabaseSeeder extends Seeder
             'title' => 'Draft a handoff checklist for new volunteers',
             'description' => 'Put together a short checklist covering shifts, contacts, equipment, and open decisions so the next volunteer can start without guesswork.',
         ],
+        [
+            'title' => 'Plan a two-day itinerary for a visiting client',
+            'description' => 'Prepare a simple itinerary with meeting times, transfer options, and a few nearby meal choices. Keep the schedule relaxed and note anything that needs advance booking.',
+        ],
+        [
+            'title' => 'Write captions for a farm market campaign',
+            'description' => 'Create a week of short captions for a local farm market. Highlight seasonal produce, opening hours, and one supplier story per post without inventing details.',
+        ],
+        [
+            'title' => 'Clean up audio for a podcast intro',
+            'description' => 'Take the supplied voiceover and music bed, remove background noise, and deliver a 20-second intro with a clear voice-to-music balance. Return the editable project file too.',
+        ],
+        [
+            'title' => 'Draft a grant application summary',
+            'description' => 'Summarise the supplied programme details into a two-page grant application. Use only the facts provided, keep headings clear, and flag any missing documents for follow-up.',
+        ],
+        [
+            'title' => 'Build a volunteer shift roster',
+            'description' => 'Turn the availability list into a two-day volunteer roster with breaks and backup contacts. Highlight any gaps so the organiser can fill them before the event.',
+        ],
     ];
 
     /**
@@ -175,7 +275,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'demo@taskmate.test',
             'password' => 'password',
             'country' => 'BD',
-            'bio' => 'Full-stack developer and designer who loves small, focused teams.',
+            'bio' => 'Community organiser who loves turning messy plans into calm, focused projects.',
             'skills' => ['Project Planning', 'Content Writing', 'Event Planning'],
         ]);
 
@@ -207,7 +307,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'alice@taskmate.test',
             'password' => 'password',
             'country' => 'US',
-            'bio' => 'Frontend developer looking for focused collaborations.',
+            'bio' => 'Retail buyer who enjoys clear copy and well-run local events.',
             'skills' => ['Copywriting', 'Social Media', 'Proofreading'],
         ]);
 
@@ -216,7 +316,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'bob@taskmate.test',
             'password' => 'password',
             'country' => 'GB',
-            'bio' => 'Backend developer who enjoys Laravel and clean APIs.',
+            'bio' => 'Bookkeeper who likes tidy spreadsheets and practical checklists.',
             'skills' => ['Bookkeeping', 'Data Entry', 'Market Research'],
         ]);
 
@@ -226,7 +326,14 @@ class DatabaseSeeder extends Seeder
             $points->grantBonus($user, $signupBonus, 'Welcome bonus');
         }
 
-        $users = User::factory(10)->create();
+        $countryPool = ['IN', 'JP', 'DE', 'BR', 'NG', 'CA', 'AU', 'FR', 'US', 'GB'];
+
+        $users = User::factory(count($countryPool))
+            ->sequence(...array_map(
+                fn (string $country): array => ['country' => $country],
+                $countryPool
+            ))
+            ->create();
 
         foreach ($users as $user) {
             $points->grantBonus($user, $signupBonus, 'Welcome bonus');
@@ -267,12 +374,16 @@ class DatabaseSeeder extends Seeder
             TaskStatus::Cancelled,
         ];
 
+        $briefIndexes = [0, 1, 2, 3, 4, 29, 6, 30, 8, 31, 10, 11, 32, 13, 14, 33, 16, 17, 18, 19];
+
         foreach ($statuses as $index => $status) {
             $type = $index % 2 === 0 ? TaskType::Paid : TaskType::Points;
-            $brief = $this->taskBrief($index);
+            $brief = $this->taskBrief($briefIndexes[$index]);
 
             $task = Task::factory()->create([
-                'uploader_id' => $index % 5 === 0 ? $demo->id : $users->random()->id,
+                'uploader_id' => $index % 5 === 0
+                    ? $demo->id
+                    : $users->get($index % $users->count())->id,
                 'title' => $brief['title'],
                 'description' => $brief['description'],
                 'team_size' => random_int(2, 5),
@@ -308,6 +419,7 @@ class DatabaseSeeder extends Seeder
                 Application::factory()->accepted()->create([
                     'task_id' => $task->id,
                     'user_id' => $user->id,
+                    'message' => $this->applicationMessage($task, $user),
                 ]);
             }
 
@@ -326,6 +438,7 @@ class DatabaseSeeder extends Seeder
                 $factory->create([
                     'task_id' => $task->id,
                     'user_id' => $remaining[$i]->id,
+                    'message' => $this->applicationMessage($task, $remaining[$i]),
                 ]);
             }
 
@@ -348,12 +461,14 @@ class DatabaseSeeder extends Seeder
                         'task_id' => $task->id,
                         'reviewer_id' => $task->uploader_id,
                         'reviewee_id' => $user->id,
+                        'comment' => $this->reviewComment($task->id + $user->id),
                     ]);
 
                     Review::factory()->create([
                         'task_id' => $task->id,
                         'reviewer_id' => $user->id,
                         'reviewee_id' => $task->uploader_id,
+                        'comment' => $this->reviewComment($task->id + $user->id + 1),
                     ]);
                 }
             }
@@ -396,6 +511,7 @@ class DatabaseSeeder extends Seeder
             Application::factory()->accepted()->create([
                 'task_id' => $demoTask->id,
                 'user_id' => $member->id,
+                'message' => $this->applicationMessage($demoTask, $member),
             ]);
         }
 
@@ -423,6 +539,7 @@ class DatabaseSeeder extends Seeder
         Application::factory()->accepted()->create([
             'task_id' => $paidTask->id,
             'user_id' => $members[3]->id,
+            'message' => $this->applicationMessage($paidTask, $members[3]),
         ]);
 
         $this->createReview($paidTask, $members[2], $members[3], 5, 'Reliable collaborator.', now()->subDays(6));
@@ -444,6 +561,7 @@ class DatabaseSeeder extends Seeder
             Application::factory()->accepted()->create([
                 'task_id' => $otherTask->id,
                 'user_id' => $member->id,
+                'message' => $this->applicationMessage($otherTask, $member),
             ]);
         }
 
@@ -466,6 +584,36 @@ class DatabaseSeeder extends Seeder
     }
 
     /**
+     * Curated chat scripts available to the demo seeder.
+     *
+     * @return array<int, array<int, string>>
+     */
+    public static function chatScripts(): array
+    {
+        return self::CHAT_SCRIPTS;
+    }
+
+    /**
+     * Curated application messages available to the demo seeder.
+     *
+     * @return array<int, string>
+     */
+    public static function applicationMessages(): array
+    {
+        return self::APPLICATION_MESSAGES;
+    }
+
+    /**
+     * Curated review comments available to the demo seeder.
+     *
+     * @return array<int, string>
+     */
+    public static function reviewComments(): array
+    {
+        return self::REVIEW_COMMENTS;
+    }
+
+    /**
      * Get a curated title and description pair for a seeded task.
      *
      * @return array{title: string, description: string}
@@ -473,6 +621,37 @@ class DatabaseSeeder extends Seeder
     private function taskBrief(int $index): array
     {
         return self::TASK_BRIEFS[$index % count(self::TASK_BRIEFS)];
+    }
+
+    /**
+     * Get a human application note for a seeded application.
+     */
+    private function applicationMessage(Task $task, User $user): string
+    {
+        return self::APPLICATION_MESSAGES[($task->id + $user->id) % count(self::APPLICATION_MESSAGES)];
+    }
+
+    /**
+     * Get a specific review comment for a seeded review.
+     */
+    private function reviewComment(int $index): string
+    {
+        return self::REVIEW_COMMENTS[$index % count(self::REVIEW_COMMENTS)];
+    }
+
+    /**
+     * Get a human chat thread for a demo conversation.
+     *
+     * @return array<int, string>
+     */
+    private function chatScript(int $index, string $taskTitle): array
+    {
+        $script = self::CHAT_SCRIPTS[$index % count(self::CHAT_SCRIPTS)];
+
+        return array_map(
+            fn (string $message): string => str_replace('{task}', $taskTitle, $message),
+            $script,
+        );
     }
 
     /**
@@ -542,6 +721,7 @@ class DatabaseSeeder extends Seeder
             $factory->create([
                 'task_id' => $task->id,
                 'user_id' => $demo->id,
+                'message' => $this->applicationMessage($task, $demo),
             ]);
 
             if ($status === ApplicationStatus::Accepted) {
@@ -587,6 +767,7 @@ class DatabaseSeeder extends Seeder
                 Application::factory()->create([
                     'task_id' => $demoTask->id,
                     'user_id' => $applicant->id,
+                    'message' => $this->applicationMessage($demoTask, $applicant),
                 ]);
             }
         }
@@ -664,6 +845,7 @@ class DatabaseSeeder extends Seeder
         Application::factory()->left()->create([
             'task_id' => $openTask->id,
             'user_id' => $leftUser->id,
+            'message' => $this->applicationMessage($openTask, $leftUser),
         ]);
 
         $startedTaskExists = Task::query()
@@ -692,6 +874,7 @@ class DatabaseSeeder extends Seeder
             ->each(fn (User $user) => Application::factory()->accepted()->create([
                 'task_id' => $startedTask->id,
                 'user_id' => $user->id,
+                'message' => $this->applicationMessage($startedTask, $user),
             ]));
 
         if ($startedTask->type === TaskType::Points) {
@@ -777,24 +960,29 @@ class DatabaseSeeder extends Seeder
             ]);
             $conversation->save();
 
-            $messageCount = random_int(5, 15);
+            $script = $this->chatScript($partner->id, $task->title);
+            $messageCount = count($script);
             $startedAt = now()->subDays(random_int(1, 7))->subMinutes($messageCount * 3);
             $lastPartnerIndex = $messageCount % 2 === 1 ? $messageCount : $messageCount - 1;
+            $lastMessageId = null;
 
             for ($index = 1; $index <= $messageCount; $index++) {
                 $sender = $index % 2 === 1 ? $partner : $demo;
                 $sentAt = $startedAt->copy()->addMinutes($index * 3);
 
-                Message::factory()->create([
+                $message = Message::factory()->create([
                     'conversation_id' => $conversation->id,
                     'sender_id' => $sender->id,
-                    'body' => fake()->paragraph(),
+                    'body' => $script[$index - 1],
+                    'reply_to_id' => $index >= 4 && $index % 4 === 0 ? $lastMessageId : null,
                     'read_at' => $sender->id === $demo->id || $index !== $lastPartnerIndex
                         ? $sentAt->copy()
                         : null,
                     'created_at' => $sentAt,
                     'updated_at' => $sentAt,
                 ]);
+
+                $lastMessageId = $message->id;
             }
 
             $conversation->forceFill([
@@ -813,6 +1001,10 @@ class DatabaseSeeder extends Seeder
         $taskId = (int) ($task?->id ?? 0);
         $applicationId = (int) (Application::query()->where('task_id', $taskId)->value('id') ?? 0);
         $applicantId = (int) (Application::query()->where('task_id', $taskId)->value('user_id') ?? 0);
+        $applicantName = $applicantId > 0
+            ? User::query()->whereKey($applicantId)->value('name') ?? 'A teammate'
+            : 'A teammate';
+        $reviewerName = User::query()->where('name', 'Bob Demo')->value('name') ?? $applicantName;
         $title = $task?->title ?? 'Demo task';
         $now = now();
 
@@ -822,7 +1014,7 @@ class DatabaseSeeder extends Seeder
                 'data' => [
                     'type' => 'application_received',
                     'title' => 'New application',
-                    'body' => "Alice Demo applied to \"{$title}\".",
+                    'body' => "{$applicantName} applied to \"{$title}\".",
                     'task_id' => $taskId,
                     'application_id' => $applicationId,
                     'user_id' => $applicantId ?: $demo->id,
@@ -846,7 +1038,7 @@ class DatabaseSeeder extends Seeder
                 'data' => [
                     'type' => 'review_received',
                     'title' => 'New review',
-                    'body' => "Bob Demo rated you 5/5 for \"{$title}\".",
+                    'body' => "{$reviewerName} rated you 5/5 for \"{$title}\".",
                     'task_id' => $taskId,
                     'user_id' => $applicantId ?: $demo->id,
                 ],

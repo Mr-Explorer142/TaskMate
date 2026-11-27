@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\DeleteMessageRequest;
 use App\Http\Requests\StoreConversationRequest;
 use App\Http\Requests\StoreMessageRequest;
+use App\Http\Requests\UpdateMessageRequest;
 use App\Http\Resources\ConversationResource;
 use App\Http\Resources\MessageResource;
 use App\Models\Application;
@@ -38,11 +40,17 @@ class ConversationController extends Controller
                 'userOne:id,name,avatar,avatar_url',
                 'userTwo:id,name,avatar,avatar_url',
                 'lastMessage',
+                'lastMessage.deletedByUsers' => fn ($query) => $query->where('user_id', $viewerId),
             ])
             ->withCount([
                 'messages as unread_count' => fn (Builder $query) => $query
                     ->where('sender_id', '!=', $viewerId)
-                    ->whereNull('read_at'),
+                    ->whereNull('read_at')
+                    ->whereNull('deleted_for_everyone_at')
+                    ->whereDoesntHave(
+                        'deletedByUsers',
+                        fn (Builder $query) => $query->where('user_id', $viewerId)
+                    ),
             ])
             ->withMax('messages', 'created_at')
             ->withMax('messages', 'id')
@@ -119,7 +127,9 @@ class ConversationController extends Controller
 
         $count = Message::query()
             ->whereNull('read_at')
+            ->whereNull('deleted_for_everyone_at')
             ->where('sender_id', '!=', $viewerId)
+            ->whereDoesntHave('deletedByUsers', fn (Builder $query) => $query->where('user_id', $viewerId))
             ->whereHas('conversation', function (Builder $query) use ($viewerId): void {
                 $query->where('user_one_id', $viewerId)
                     ->orWhere('user_two_id', $viewerId);
@@ -130,10 +140,11 @@ class ConversationController extends Controller
     }
 
     /**
-     * List messages in a conversation.
+     * List visible messages in a conversation.
      */
     public function messages(Request $request, Conversation $conversation): AnonymousResourceCollection
     {
+        $viewerId = $request->user()->id;
         $this->ensureParticipant($conversation, $request->user());
 
         $data = $request->validate([
@@ -141,7 +152,16 @@ class ConversationController extends Controller
             'after_id' => ['nullable', 'integer', 'min:1'],
         ]);
 
-        $query = $conversation->messages()->getQuery();
+        $query = $conversation->messages()
+            ->whereDoesntHave(
+                'deletedByUsers',
+                fn (Builder $query) => $query->where('user_id', $viewerId)
+            )
+            ->with([
+                'deletedByUsers' => fn ($query) => $query->where('user_id', $viewerId),
+                'replyTo.deletedByUsers' => fn ($query) => $query->where('user_id', $viewerId),
+            ])
+            ->getQuery();
 
         if (isset($data['after_id'])) {
             $messages = $query
@@ -174,30 +194,114 @@ class ConversationController extends Controller
      */
     public function sendMessage(StoreMessageRequest $request, Conversation $conversation): JsonResponse
     {
-        $this->ensureParticipant($conversation, $request->user());
+        $viewer = $request->user();
+        $this->ensureParticipant($conversation, $viewer);
+
+        $replyToId = $request->validated('reply_to_id');
+
+        if ($replyToId !== null) {
+            $replyTo = Message::query()->findOrFail($replyToId);
+            $this->ensureMessageInConversation($conversation, $replyTo);
+            abort_if(
+                $replyTo->isDeletedForEveryone() || $replyTo->isDeletedForUser($viewer->id),
+                422,
+                'You cannot reply to a deleted message.',
+            );
+        }
 
         $message = new Message;
         $message->forceFill([
             'conversation_id' => $conversation->id,
-            'sender_id' => $request->user()->id,
+            'sender_id' => $viewer->id,
             'body' => $request->validated('body'),
+            'reply_to_id' => $replyToId,
         ]);
         $message->save();
 
-        return ApiResponse::success(new MessageResource($message), 'Message sent.', 201);
+        return ApiResponse::success(
+            new MessageResource($this->loadMessage($message, $viewer->id)),
+            'Message sent.',
+            201,
+        );
     }
 
     /**
-     * Mark all messages from the other participant as read.
+     * Edit a message the authenticated user sent.
+     */
+    public function updateMessage(
+        UpdateMessageRequest $request,
+        Conversation $conversation,
+        Message $message,
+    ): JsonResponse {
+        $viewer = $request->user();
+        $this->ensureParticipant($conversation, $viewer);
+        $this->ensureMessageInConversation($conversation, $message);
+
+        abort_unless($message->sender_id === $viewer->id, 403, 'Only the sender can edit a message.');
+        abort_if(
+            $message->isDeletedForEveryone() || $message->isDeletedForUser($viewer->id),
+            409,
+            'Deleted messages cannot be edited.',
+        );
+
+        $message->forceFill([
+            'body' => $request->validated('body'),
+            'edited_at' => now(),
+        ])->save();
+
+        return ApiResponse::success(
+            new MessageResource($this->loadMessage($message, $viewer->id)),
+            'Message updated.',
+        );
+    }
+
+    /**
+     * Delete a message for the viewer or for everyone in the conversation.
+     */
+    public function destroyMessage(
+        DeleteMessageRequest $request,
+        Conversation $conversation,
+        Message $message,
+    ): JsonResponse {
+        $viewer = $request->user();
+        $this->ensureParticipant($conversation, $viewer);
+        $this->ensureMessageInConversation($conversation, $message);
+
+        $scope = $request->validated('scope');
+
+        if ($scope === 'everyone') {
+            abort_unless($message->sender_id === $viewer->id, 403, 'Only the sender can delete a message for everyone.');
+
+            if (! $message->isDeletedForEveryone()) {
+                $message->forceFill(['deleted_for_everyone_at' => now()])->save();
+            }
+        } else {
+            DB::table('message_deletions')->updateOrInsert(
+                ['message_id' => $message->id, 'user_id' => $viewer->id],
+                ['deleted_at' => now(), 'updated_at' => now()],
+            );
+        }
+
+        return ApiResponse::success(
+            new MessageResource($this->loadMessage($message->refresh(), $viewer->id)),
+            $scope === 'everyone' ? 'Message deleted for everyone.' : 'Message deleted for you.',
+        );
+    }
+
+    /**
+     * Mark all visible messages from the other participant as read.
      */
     public function markRead(Request $request, Conversation $conversation): JsonResponse
     {
+        $viewerId = $request->user()->id;
         $this->ensureParticipant($conversation, $request->user());
 
         $updated = Message::query()
             ->where('conversation_id', $conversation->id)
-            ->where('sender_id', '!=', $request->user()->id)
+            ->where('sender_id', '!=', $viewerId)
             ->whereNull('read_at')
+            ->whereNull('deleted_for_everyone_at')
+            ->whereDoesntHave('deletedByUsers', fn (Builder $query) => $query->where('user_id', $viewerId))
             ->update(['read_at' => now()]);
 
         return ApiResponse::success(['updated' => $updated], 'Messages marked as read.');
@@ -235,6 +339,25 @@ class ConversationController extends Controller
     }
 
     /**
+     * Ensure the message is part of the current conversation.
+     */
+    private function ensureMessageInConversation(Conversation $conversation, Message $message): void
+    {
+        abort_unless($message->conversation_id === $conversation->id, 404, 'Message not found in this conversation.');
+    }
+
+    /**
+     * Load the relations used to render one message for the given viewer.
+     */
+    private function loadMessage(Message $message, int $viewerId): Message
+    {
+        return $message->load([
+            'deletedByUsers' => fn ($query) => $query->where('user_id', $viewerId),
+            'replyTo.deletedByUsers' => fn ($query) => $query->where('user_id', $viewerId),
+        ]);
+    }
+
+    /**
      * Eager load everything the conversation resource needs for one viewer.
      */
     private function loadConversation(Conversation $conversation, int $viewerId): Conversation
@@ -245,11 +368,17 @@ class ConversationController extends Controller
                 'userOne:id,name,avatar,avatar_url',
                 'userTwo:id,name,avatar,avatar_url',
                 'lastMessage',
+                'lastMessage.deletedByUsers' => fn ($query) => $query->where('user_id', $viewerId),
             ])
             ->loadCount([
                 'messages as unread_count' => fn (Builder $query) => $query
                     ->where('sender_id', '!=', $viewerId)
-                    ->whereNull('read_at'),
+                    ->whereNull('read_at')
+                    ->whereNull('deleted_for_everyone_at')
+                    ->whereDoesntHave(
+                        'deletedByUsers',
+                        fn (Builder $query) => $query->where('user_id', $viewerId)
+                    ),
             ]);
     }
 

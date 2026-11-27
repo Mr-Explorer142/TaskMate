@@ -39,6 +39,7 @@ export function TaskCard({
               type={task.type}
               reward={task.reward}
               uploaderCountry={task.uploader?.country}
+              variant="compact"
             />
           </span>
         </div>

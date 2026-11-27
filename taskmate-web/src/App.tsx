@@ -10,6 +10,7 @@ import {
   PublicOnlyRoute,
 } from "@/components/ProtectedRoute"
 import { Toaster } from "@/components/ui/sonner"
+import { ExchangeRatesProvider } from "@/hooks/ExchangeRatesProvider"
 
 const AuthCallbackPage = lazy(() =>
   import("@/pages/AuthCallback").then((module) => ({
@@ -94,64 +95,66 @@ const VerifyEmailPage = lazy(() =>
 
 function App() {
   return (
-    <AuthBootstrap>
-      <BrowserRouter>
-        <ScrollToTop />
-        <Suspense fallback={<PageLoadingSkeleton />}>
-          <Routes>
-            <Route
-              path="/login"
-              element={
-                <PublicOnlyRoute>
-                  <LoginPage />
-                </PublicOnlyRoute>
-              }
-            />
-            <Route
-              path="/register"
-              element={
-                <PublicOnlyRoute>
-                  <RegisterPage />
-                </PublicOnlyRoute>
-              }
-            />
-            <Route path="/auth/callback" element={<AuthCallbackPage />} />
-            <Route path="/verify-email" element={<VerifyEmailPage />} />
+    <ExchangeRatesProvider>
+      <AuthBootstrap>
+        <BrowserRouter>
+          <ScrollToTop />
+          <Suspense fallback={<PageLoadingSkeleton />}>
+            <Routes>
+              <Route
+                path="/login"
+                element={
+                  <PublicOnlyRoute>
+                    <LoginPage />
+                  </PublicOnlyRoute>
+                }
+              />
+              <Route
+                path="/register"
+                element={
+                  <PublicOnlyRoute>
+                    <RegisterPage />
+                  </PublicOnlyRoute>
+                }
+              />
+              <Route path="/auth/callback" element={<AuthCallbackPage />} />
+              <Route path="/verify-email" element={<VerifyEmailPage />} />
 
-            <Route element={<AppLayout />}>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/tasks" element={<TasksPage />} />
-              <Route path="/tasks/:id" element={<TaskDetailPage />} />
-            </Route>
-
-            <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
-                <Route path="/tasks/new" element={<CreateTaskPage />} />
-                <Route path="/tasks/:id/edit" element={<EditTaskPage />} />
-                <Route
-                  path="/tasks/:id/applicants"
-                  element={<TaskApplicantsPage />}
-                />
-                <Route path="/my-tasks" element={<MyTasksPage />} />
-                <Route path="/my-applications" element={<MyApplicationsPage />} />
-                <Route path="/notifications" element={<NotificationsPage />} />
-                <Route path="/messages" element={<MessagesPage />} />
-                <Route
-                  path="/messages/:conversationId"
-                  element={<MessagesPage />}
-                />
-                <Route path="/points" element={<PointsPage />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/users/:id" element={<UserProfilePage />} />
+                <Route path="/" element={<HomePage />} />
+                <Route path="/tasks" element={<TasksPage />} />
+                <Route path="/tasks/:id" element={<TaskDetailPage />} />
               </Route>
-            </Route>
 
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-      <Toaster position="top-right" richColors closeButton />
-    </AuthBootstrap>
+              <Route element={<ProtectedRoute />}>
+                <Route element={<AppLayout />}>
+                  <Route path="/tasks/new" element={<CreateTaskPage />} />
+                  <Route path="/tasks/:id/edit" element={<EditTaskPage />} />
+                  <Route
+                    path="/tasks/:id/applicants"
+                    element={<TaskApplicantsPage />}
+                  />
+                  <Route path="/my-tasks" element={<MyTasksPage />} />
+                  <Route path="/my-applications" element={<MyApplicationsPage />} />
+                  <Route path="/notifications" element={<NotificationsPage />} />
+                  <Route path="/messages" element={<MessagesPage />} />
+                  <Route
+                    path="/messages/:conversationId"
+                    element={<MessagesPage />}
+                  />
+                  <Route path="/points" element={<PointsPage />} />
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/users/:id" element={<UserProfilePage />} />
+                </Route>
+              </Route>
+
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+        <Toaster position="top-right" richColors closeButton />
+      </AuthBootstrap>
+    </ExchangeRatesProvider>
   )
 }
 

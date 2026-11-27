@@ -378,6 +378,7 @@ export function TaskDetailPage() {
               type={task.type}
               reward={task.reward}
               uploaderCountry={task.uploader?.country}
+              variant="detail"
             />
           </span>
           <span className="flex items-center gap-1.5">

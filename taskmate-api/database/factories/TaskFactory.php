@@ -22,9 +22,10 @@ class TaskFactory extends Factory
      */
     private const SKILLS = [
         'Bookkeeping', 'Content Writing', 'Copywriting', 'Customer Support', 'Data Entry',
-        'Event Planning', 'Fundraising', 'Graphic Design', 'HR Admin', 'Lesson Planning',
-        'Legal Admin', 'Market Research', 'Photo Editing', 'Project Planning', 'Proofreading',
-        'Real Estate', 'Social Media', 'Survey Design', 'Translation', 'Video Editing',
+        'Event Planning', 'Fundraising', 'Grant Writing', 'Graphic Design', 'HR Admin',
+        'Lesson Planning', 'Legal Admin', 'Market Research', 'Music Editing', 'Photo Editing',
+        'Project Planning', 'Proofreading', 'Real Estate', 'Social Media', 'Survey Design',
+        'Translation', 'Travel Planning', 'Video Editing', 'Volunteer Coordination',
     ];
 
     /**

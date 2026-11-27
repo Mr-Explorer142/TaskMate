@@ -282,3 +282,58 @@ export function formatMoney(
     }).format(Number(amount))
   }
 }
+
+export function hasUsdRate(
+  currency: string,
+  rates: Record<string, number>
+): boolean {
+  return currency === FALLBACK_CURRENCY || (rates[currency] ?? 0) > 0
+}
+
+/**
+ * Convert a USD amount into the given currency. Returns null when the rate is
+ * not available so callers can show an explicit fallback instead of a wrong
+ * currency symbol.
+ */
+export function convertUsdToCurrency(
+  amount: string | number,
+  currency: string,
+  rates: Record<string, number>
+): number | null {
+  const value = Number(amount)
+
+  if (!Number.isFinite(value)) {
+    return null
+  }
+
+  if (currency === FALLBACK_CURRENCY) {
+    return value
+  }
+
+  const rate = rates[currency]
+
+  return rate !== undefined && rate > 0 ? value * rate : null
+}
+
+/**
+ * Convert an amount in the given currency back into canonical USD.
+ */
+export function convertCurrencyToUsd(
+  amount: string | number,
+  currency: string,
+  rates: Record<string, number>
+): number | null {
+  const value = Number(amount)
+
+  if (!Number.isFinite(value)) {
+    return null
+  }
+
+  if (currency === FALLBACK_CURRENCY) {
+    return value
+  }
+
+  const rate = rates[currency]
+
+  return rate !== undefined && rate > 0 ? value / rate : null
+}

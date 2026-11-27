@@ -167,6 +167,156 @@ it('marks only the other participant messages as read', function () {
         ->assertJsonPath('data.0.unread_count', 1);
 });
 
+it('lets only the sender edit a message', function () {
+    $viewer = authAs();
+    $partner = User::factory()->create();
+    $task = Task::factory()->open()->create(['uploader_id' => $viewer->id]);
+    $conversation = messageTestConversation($viewer, $partner, $task);
+
+    $ownMessage = messageTestMessage($conversation, [
+        'sender_id' => $viewer->id,
+        'body' => 'Original note',
+    ]);
+
+    $this->patchJson("/api/v1/conversations/{$conversation->id}/messages/{$ownMessage->id}", ['body' => '  Updated note  '])
+        ->assertOk()
+        ->assertJsonPath('data.body', 'Updated note')
+        ->assertJsonPath('data.is_deleted_for_everyone', false);
+
+    expect($ownMessage->fresh()->body)->toBe('Updated note')
+        ->and($ownMessage->fresh()->edited_at)->not->toBeNull();
+
+    $partnerMessage = messageTestMessage($conversation, [
+        'sender_id' => $partner->id,
+        'body' => 'Partner note',
+    ]);
+
+    $this->patchJson("/api/v1/conversations/{$conversation->id}/messages/{$partnerMessage->id}", ['body' => 'Changed'])
+        ->assertForbidden();
+});
+
+it('deletes a message only for the viewing participant', function () {
+    $viewer = authAs();
+    $partner = User::factory()->create();
+    $task = Task::factory()->open()->create(['uploader_id' => $viewer->id]);
+    $conversation = messageTestConversation($viewer, $partner, $task);
+
+    $message = messageTestMessage($conversation, [
+        'sender_id' => $partner->id,
+        'body' => 'A note just for you',
+    ]);
+
+    $this->deleteJson("/api/v1/conversations/{$conversation->id}/messages/{$message->id}?scope=me")
+        ->assertOk();
+
+    $this->getJson("/api/v1/conversations/{$conversation->id}/messages")
+        ->assertOk()
+        ->assertJsonCount(0, 'data');
+
+    authAs($partner);
+
+    $this->getJson("/api/v1/conversations/{$conversation->id}/messages")
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.body', 'A note just for you');
+});
+
+it('deletes a message for everyone and rejects non-sender deletion', function () {
+    $viewer = authAs();
+    $partner = User::factory()->create();
+    $task = Task::factory()->open()->create(['uploader_id' => $viewer->id]);
+    $conversation = messageTestConversation($viewer, $partner, $task);
+
+    $partnerMessage = messageTestMessage($conversation, [
+        'sender_id' => $partner->id,
+        'body' => 'Keep this one',
+    ]);
+
+    $this->deleteJson("/api/v1/conversations/{$conversation->id}/messages/{$partnerMessage->id}?scope=everyone")
+        ->assertForbidden();
+
+    $ownMessage = messageTestMessage($conversation, [
+        'sender_id' => $viewer->id,
+        'body' => 'Remove this one',
+    ]);
+
+    $this->deleteJson("/api/v1/conversations/{$conversation->id}/messages/{$ownMessage->id}?scope=everyone")
+        ->assertOk()
+        ->assertJsonPath('data.body', 'This message was deleted.')
+        ->assertJsonPath('data.is_deleted_for_everyone', true);
+
+    authAs($partner);
+
+    $response = $this->getJson("/api/v1/conversations/{$conversation->id}/messages")
+        ->assertOk();
+
+    expect(collect($response->json('data'))->pluck('body')->all())
+        ->toContain('This message was deleted.');
+});
+
+it('sends replies and validates the reply target', function () {
+    $viewer = authAs();
+    $partner = User::factory()->create();
+    $thirdUser = User::factory()->create();
+    $task = Task::factory()->open()->create(['uploader_id' => $viewer->id]);
+    $conversation = messageTestConversation($viewer, $partner, $task);
+
+    $original = messageTestMessage($conversation, [
+        'sender_id' => $partner->id,
+        'body' => 'Original question',
+    ]);
+
+    $this->postJson("/api/v1/conversations/{$conversation->id}/messages", [
+        'body' => 'Here is my answer',
+        'reply_to_id' => $original->id,
+    ])
+        ->assertCreated()
+        ->assertJsonPath('data.reply_to.id', $original->id)
+        ->assertJsonPath('data.reply_to.body', 'Original question');
+
+    $otherTask = Task::factory()->open()->create(['uploader_id' => $viewer->id]);
+    $otherConversation = messageTestConversation($viewer, $thirdUser, $otherTask);
+    $foreign = messageTestMessage($otherConversation, [
+        'sender_id' => $thirdUser->id,
+        'body' => 'From another conversation',
+    ]);
+
+    $this->postJson("/api/v1/conversations/{$conversation->id}/messages", [
+        'body' => 'Wrong target',
+        'reply_to_id' => $foreign->id,
+    ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('reply_to_id');
+
+    $deleted = messageTestMessage($conversation, [
+        'sender_id' => $viewer->id,
+        'body' => 'Removed question',
+    ]);
+
+    $this->deleteJson("/api/v1/conversations/{$conversation->id}/messages/{$deleted->id}?scope=everyone")
+        ->assertOk();
+
+    $this->postJson("/api/v1/conversations/{$conversation->id}/messages", [
+        'body' => 'Cannot reply',
+        'reply_to_id' => $deleted->id,
+    ])->assertUnprocessable();
+});
+
+it('validates the deletion scope', function () {
+    $viewer = authAs();
+    $partner = User::factory()->create();
+    $task = Task::factory()->open()->create(['uploader_id' => $viewer->id]);
+    $conversation = messageTestConversation($viewer, $partner, $task);
+    $message = messageTestMessage($conversation, [
+        'sender_id' => $partner->id,
+        'body' => 'A note',
+    ]);
+
+    $this->deleteJson("/api/v1/conversations/{$conversation->id}/messages/{$message->id}")
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('scope');
+});
+
 it('rate limits sending messages to sixty per minute', function () {
     $viewer = authAs();
     $partner = User::factory()->create();

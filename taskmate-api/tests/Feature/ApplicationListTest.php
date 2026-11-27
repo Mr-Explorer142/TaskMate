@@ -22,10 +22,13 @@ it('lists only the authenticated user applications with task summaries', functio
         ->assertJsonPath('data.0.task.title', $task->title)
         ->assertJsonPath('data.0.task.team_size', 3)
         ->assertJsonPath('data.0.task.accepted_count', 0)
+        ->assertJsonPath('data.0.task.reward_currency', 'USD')
+        ->assertJsonPath('data.0.task.uploader.country', $task->uploader->country)
         ->assertJsonPath('meta.per_page', 12);
 
     expect($response->json('data.0.task'))->toHaveKeys([
-        'id', 'title', 'type', 'reward', 'status', 'team_size', 'accepted_count',
+        'id', 'title', 'type', 'reward', 'reward_currency', 'status', 'team_size',
+        'accepted_count', 'uploader',
     ]);
 });
 

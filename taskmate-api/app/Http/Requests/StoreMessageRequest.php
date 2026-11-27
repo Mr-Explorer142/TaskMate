@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreMessageRequest extends FormRequest
 {
@@ -23,6 +24,14 @@ class StoreMessageRequest extends FormRequest
     {
         return [
             'body' => ['required', 'string', 'max:2000'],
+            'reply_to_id' => [
+                'nullable',
+                'integer',
+                'min:1',
+                Rule::exists('messages', 'id')->where(
+                    fn ($query) => $query->where('conversation_id', $this->route('conversation')?->id)
+                ),
+            ],
         ];
     }
 

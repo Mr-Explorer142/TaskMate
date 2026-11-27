@@ -39,10 +39,18 @@ class ApplicationResource extends JsonResource
                 'title' => $this->task->title,
                 'type' => $this->task->type->value,
                 'reward' => $this->task->reward,
+                'reward_currency' => 'USD',
                 'status' => $this->task->status->value,
                 'team_size' => $this->task->team_size,
                 'accepted_count' => $this->task->acceptedCount(),
                 'pending_reviews_count' => $this->pendingReviewsCount($request),
+                'uploader' => $this->task->relationLoaded('uploader')
+                    ? [
+                        'id' => $this->task->uploader->id,
+                        'name' => $this->task->uploader->name,
+                        'country' => $this->task->uploader->country,
+                    ]
+                    : null,
             ]),
         ];
     }

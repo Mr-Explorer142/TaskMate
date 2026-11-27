@@ -1,5 +1,11 @@
 import { api } from "@/api/client"
-import type { ApiEnvelope, Conversation, Message, Paginated } from "@/types"
+import type {
+  ApiEnvelope,
+  Conversation,
+  Message,
+  MessageDeleteScope,
+  Paginated,
+} from "@/types"
 
 export interface MessageQuery {
   before_id?: number
@@ -45,11 +51,38 @@ export async function getMessages(
 
 export async function sendMessage(
   conversationId: number,
-  body: string
+  body: string,
+  replyToId?: number | null
 ): Promise<Message> {
   const { data } = await api.post<ApiEnvelope<Message>>(
     `/conversations/${conversationId}/messages`,
+    { body, reply_to_id: replyToId ?? undefined }
+  )
+
+  return data.data
+}
+
+export async function updateMessage(
+  conversationId: number,
+  messageId: number,
+  body: string
+): Promise<Message> {
+  const { data } = await api.patch<ApiEnvelope<Message>>(
+    `/conversations/${conversationId}/messages/${messageId}`,
     { body }
+  )
+
+  return data.data
+}
+
+export async function deleteMessage(
+  conversationId: number,
+  messageId: number,
+  scope: MessageDeleteScope
+): Promise<Message> {
+  const { data } = await api.delete<ApiEnvelope<Message>>(
+    `/conversations/${conversationId}/messages/${messageId}`,
+    { params: { scope } }
   )
 
   return data.data

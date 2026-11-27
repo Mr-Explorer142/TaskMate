@@ -12,6 +12,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { TaskReward } from "@/components/tasks/TaskReward"
 import { Button } from "@/components/ui/button"
 import { formatPoints } from "@/lib/format"
 import type { Task } from "@/types"
@@ -84,7 +85,16 @@ export function CompleteProjectDialog({
               refunded to you.
             </>
           ) : (
-            <>Payment is handled outside TaskMate.</>
+            <>
+              Agreed reward:{" "}
+              <TaskReward
+                type={task.type}
+                reward={task.reward}
+                uploaderCountry={task.uploader?.country}
+                variant="inline"
+              />{" "}
+              per member. Payment is handled outside TaskMate.
+            </>
           )}
         </div>
 

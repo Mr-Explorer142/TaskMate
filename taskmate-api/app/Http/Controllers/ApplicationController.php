@@ -115,12 +115,14 @@ class ApplicationController extends Controller
             )
             ->defaultSort('-created_at')
             ->with([
-                'task' => fn (BelongsTo $query) => $query->withCount([
-                    'applications as accepted_applications_count' => fn (Builder $query) => $query
-                        ->where('status', ApplicationStatus::Accepted->value),
-                    'reviews as my_reviews_count' => fn (Builder $query) => $query
-                        ->where('reviewer_id', $request->user()->id),
-                ]),
+                'task' => fn (BelongsTo $query) => $query
+                    ->with('uploader:id,name,country,avatar_url')
+                    ->withCount([
+                        'applications as accepted_applications_count' => fn (Builder $query) => $query
+                            ->where('status', ApplicationStatus::Accepted->value),
+                        'reviews as my_reviews_count' => fn (Builder $query) => $query
+                            ->where('reviewer_id', $request->user()->id),
+                    ]),
             ])
             ->paginate(12);
 

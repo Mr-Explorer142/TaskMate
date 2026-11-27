@@ -1,108 +1,55 @@
-import { useEffect, useState } from "react"
+import { useCallback, useContext, useEffect, useMemo } from "react"
 
+import {
+  ExchangeRatesContext,
+  type ExchangeRateStatus,
+} from "@/hooks/exchangeRatesContext"
 import { FALLBACK_CURRENCY } from "@/lib/currencies"
 
-const API_URL = "https://api.frankfurter.dev/v2/rates"
-const CACHE_TTL_MS = 60 * 60 * 1000
-
-interface FrankfurterRate {
-  base: string
-  quote: string
-  rate: number
-}
-
-interface CachedRates {
-  rates: Record<string, number>
-  expiresAt: number
-}
-
-const cache = new Map<string, CachedRates>()
-const inFlight = new Map<string, Promise<Record<string, number>>>()
-
-async function loadRates(quotes: string[]): Promise<Record<string, number>> {
-  const uniqueQuotes = [...new Set(quotes)]
-    .filter((quote) => quote !== FALLBACK_CURRENCY)
-    .sort()
-
-  if (uniqueQuotes.length === 0) {
-    return { [FALLBACK_CURRENCY]: 1 }
-  }
-
-  const cacheKey = uniqueQuotes.join(",")
-  const cached = cache.get(cacheKey)
-
-  if (cached && cached.expiresAt > Date.now()) {
-    return cached.rates
-  }
-
-  const pending = inFlight.get(cacheKey)
-
-  if (pending) {
-    return pending
-  }
-
-  const request = (async () => {
-    const response = await fetch(
-      `${API_URL}?base=${FALLBACK_CURRENCY}&quotes=${uniqueQuotes.join(",")}`
-    )
-
-    if (!response.ok) {
-      throw new Error(`Frankfurter returned ${response.status}`)
-    }
-
-    const entries = (await response.json()) as FrankfurterRate[]
-    const rates: Record<string, number> = { [FALLBACK_CURRENCY]: 1 }
-
-    for (const entry of entries) {
-      if (typeof entry.rate === "number" && entry.rate > 0) {
-        rates[entry.quote] = entry.rate
-      }
-    }
-
-    cache.set(cacheKey, {
-      rates,
-      expiresAt: Date.now() + CACHE_TTL_MS,
-    })
-
-    return rates
-  })().finally(() => {
-    inFlight.delete(cacheKey)
-  })
-
-  inFlight.set(cacheKey, request)
-
-  return request
-}
-
 /**
- * Fetch USD-based rates for the given currencies, shared across all callers.
- * Falls back to USD whenever a rate is unavailable.
+ * Request USD-based rates for the given currencies and expose their status.
+ * Rates are cached globally, so multiple cards share one request per currency.
  */
-export function useExchangeRates(currencies: string[]): Record<string, number> {
+export function useExchangeRates(currencies: string[]) {
+  const context = useContext(ExchangeRatesContext)
+
+  if (!context) {
+    throw new Error("useExchangeRates must be used within ExchangeRatesProvider")
+  }
+
+  const { rates, asOf, status: contextStatus, ensureRates, refreshRates } = context
   const key = [...new Set(currencies)].sort().join(",")
-  const [rates, setRates] = useState<Record<string, number>>({
-    [FALLBACK_CURRENCY]: 1,
-  })
+  const requestedCurrencies = useMemo(
+    () => (key === "" ? [] : key.split(",")),
+    [key]
+  )
 
   useEffect(() => {
-    let active = true
+    ensureRates(requestedCurrencies)
+  }, [ensureRates, requestedCurrencies])
 
-    void loadRates(key === "" ? [] : key.split(","))
-      .then((nextRates) => {
-        if (active) {
-          setRates(nextRates)
-        }
-      })
-      .catch(() => {
-        if (active) {
-          setRates({ [FALLBACK_CURRENCY]: 1 })
-        }
-      })
+  const missing = requestedCurrencies.filter(
+    (currency) =>
+      currency !== FALLBACK_CURRENCY && rates[currency] === undefined
+  )
 
-    return () => {
-      active = false
-    }
-  }, [key])
+  const status: ExchangeRateStatus =
+    missing.length === 0
+      ? "ready"
+      : contextStatus === "fallback"
+        ? "fallback"
+        : "loading"
 
-  return rates
+  const refresh = useCallback(
+    () => refreshRates(requestedCurrencies),
+    [refreshRates, requestedCurrencies]
+  )
+
+  return {
+    rates,
+    asOf,
+    status,
+    missing,
+    refresh,
+  }
 }

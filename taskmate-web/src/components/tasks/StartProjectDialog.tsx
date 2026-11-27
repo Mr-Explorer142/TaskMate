@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Play } from "lucide-react"
 import { Link } from "react-router-dom"
 
+import { TaskReward } from "@/components/tasks/TaskReward"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -81,7 +82,21 @@ export function StartProjectDialog({
               </p>
             ) : null}
           </div>
-        ) : null}
+        ) : (
+          <div className="space-y-1 rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+            <p className="font-medium text-foreground">
+              Agreed reward:{" "}
+              <TaskReward
+                type={task.type}
+                reward={task.reward}
+                uploaderCountry={task.uploader?.country}
+                variant="inline"
+              />{" "}
+              per member
+            </p>
+            <p>Payment is handled outside TaskMate.</p>
+          </div>
+        )}
 
         <AlertDialogFooter>
           <AlertDialogCancel disabled={busy}>Not now</AlertDialogCancel>

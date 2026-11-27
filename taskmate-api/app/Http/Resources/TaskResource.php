@@ -34,6 +34,7 @@ class TaskResource extends JsonResource
             'team_size' => $this->team_size,
             'type' => $this->type->value,
             'reward' => $this->reward,
+            'reward_currency' => 'USD',
             'status' => $this->status->value,
             'started_at' => $this->started_at?->toIso8601String(),
             'completed_at' => $this->completed_at?->toIso8601String(),

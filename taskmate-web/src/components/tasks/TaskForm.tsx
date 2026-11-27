@@ -22,7 +22,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
-import { CURRENCY_SYMBOL, todayInputValue } from "@/lib/format"
+import { useExchangeRates } from "@/hooks/useExchangeRates"
+import { useViewerCurrency } from "@/hooks/useViewerCurrency"
+import {
+  convertUsdToCurrency,
+  FALLBACK_CURRENCY,
+  formatMoney,
+} from "@/lib/currencies"
+import { todayInputValue } from "@/lib/format"
 import { useTaskStore } from "@/stores/useTaskStore"
 import type { Task, TaskPayload } from "@/types"
 
@@ -159,9 +166,25 @@ export function TaskForm({ task }: { task?: Task }) {
   })
 
   const type = form.watch("type")
+  const rewardInput = form.watch("reward")
   const descriptionLength = form.watch("description").length
   const isSubmitting = form.formState.isSubmitting
   const isDirty = form.formState.isDirty
+  const { currency: viewerCurrency, isGuest } = useViewerCurrency()
+  const { rates, status: ratesStatus, refresh } = useExchangeRates([
+    viewerCurrency,
+  ])
+
+  const rewardAmount =
+    type === "paid" && /^\d+(\.\d{1,2})?$/.test(rewardInput.trim())
+      ? Number(rewardInput)
+      : null
+  const localEquivalent =
+    rewardAmount !== null
+      ? convertUsdToCurrency(rewardAmount, viewerCurrency, rates)
+      : null
+  const showLocalHint =
+    type === "paid" && !isGuest && viewerCurrency !== FALLBACK_CURRENCY
 
   useEffect(() => {
     if (!isDirty) {
@@ -366,9 +389,7 @@ export function TaskForm({ task }: { task?: Task }) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  {type === "paid"
-                    ? `Reward (${CURRENCY_SYMBOL})`
-                    : "Reward (points)"}
+                  {type === "paid" ? "Reward (USD)" : "Reward (points)"}
                 </FormLabel>
                 <FormControl>
                   <Input
@@ -382,9 +403,33 @@ export function TaskForm({ task }: { task?: Task }) {
                 </FormControl>
                 <FormDescription>
                   {type === "paid"
-                    ? "Amount in dollars, up to 2 decimals."
+                    ? "Stored in USD, up to 2 decimals."
                     : "Whole number of points."}
                 </FormDescription>
+                {showLocalHint ? (
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <p className="text-xs text-muted-foreground">
+                      {ratesStatus === "loading"
+                        ? `Converting to ${viewerCurrency}…`
+                        : localEquivalent !== null
+                          ? `≈ ${formatMoney(localEquivalent, viewerCurrency)} for your country`
+                          : "Local equivalent unavailable; USD is the canonical currency."}
+                    </p>
+                    {rewardAmount !== null &&
+                    localEquivalent === null &&
+                    ratesStatus !== "loading" ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto px-1 text-xs"
+                        onClick={() => void refresh()}
+                      >
+                        Retry rates
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : null}
                 {type === "points" ? (
                   <p className="text-xs text-muted-foreground">
                     Reward is per member. When you start the project, reward x

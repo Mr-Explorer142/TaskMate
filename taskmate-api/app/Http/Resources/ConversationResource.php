@@ -38,8 +38,9 @@ class ConversationResource extends JsonResource
             'last_message' => $this->whenLoaded('lastMessage', fn () => $this->lastMessage === null ? null : [
                 'id' => $this->lastMessage->id,
                 'sender_id' => $this->lastMessage->sender_id,
-                'body' => Str::limit($this->lastMessage->body, 120),
+                'body' => Str::limit($this->lastMessage->bodyForViewer($viewerId), 120),
                 'created_at' => $this->lastMessage->created_at?->toIso8601String(),
+                'is_deleted_for_everyone' => $this->lastMessage->isDeletedForEveryone(),
             ]),
             'unread_count' => (int) ($this->unread_count ?? 0),
             'created_at' => $this->created_at?->toIso8601String(),

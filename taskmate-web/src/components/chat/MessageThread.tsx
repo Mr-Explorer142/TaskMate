@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { ArrowLeft, MessagesSquare } from "lucide-react"
 import { Link } from "react-router-dom"
 import { toast } from "sonner"
@@ -13,8 +13,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { usePolling } from "@/hooks/usePolling"
 import { formatDayLabel, isNewMessageDay } from "@/lib/format"
 import { getInitials } from "@/lib/utils"
+import { useAuthStore } from "@/stores/useAuthStore"
 import { useChatStore } from "@/stores/useChatStore"
-import type { Conversation } from "@/types"
+import type { Conversation, Message, MessageDeleteScope } from "@/types"
 
 
 export function MessageThread({ conversation }: { conversation: Conversation }) {
@@ -29,7 +30,16 @@ export function MessageThread({ conversation }: { conversation: Conversation }) 
   const pollMessages = useChatStore((state) => state.pollMessages)
   const loadOlder = useChatStore((state) => state.loadOlder)
   const sendMessage = useChatStore((state) => state.sendMessage)
+  const updateMessage = useChatStore((state) => state.updateMessage)
+  const deleteMessage = useChatStore((state) => state.deleteMessage)
+  const ownId = useAuthStore((state) => state.user?.id)
 
+  const [replyState, setReplyState] = useState<{
+    conversationId: number
+    message: Message
+  } | null>(null)
+  const replyTarget =
+    replyState?.conversationId === conversation.id ? replyState.message : null
   const scrollRef = useRef<HTMLDivElement>(null)
   const shouldStick = useRef(true)
   const lastCount = useRef(0)
@@ -76,14 +86,55 @@ export function MessageThread({ conversation }: { conversation: Conversation }) 
     }
   }
 
-  async function handleSend(body: string) {
+  async function handleSend(body: string, replyToId?: number | null) {
     try {
-      await sendMessage(conversation.id, body)
+      await sendMessage(conversation.id, body, replyToId)
+      setReplyState(null)
     } catch (caught) {
       toast.error(getApiErrorMessage(caught))
       throw caught
     }
   }
+
+  function handleReply(message: Message) {
+    if (message.pending || message.is_deleted_for_everyone) {
+      return
+    }
+
+    setReplyState({ conversationId: conversation.id, message })
+  }
+
+  async function handleEdit(message: Message, body: string) {
+    try {
+      await updateMessage(conversation.id, message.id, body)
+      toast.success("Message updated.")
+    } catch (caught) {
+      toast.error(getApiErrorMessage(caught))
+      throw caught
+    }
+  }
+
+  async function handleDelete(message: Message, scope: MessageDeleteScope) {
+    try {
+      await deleteMessage(conversation.id, message.id, scope)
+      toast.success(
+        scope === "everyone" ? "Message deleted for everyone." : "Message deleted for you."
+      )
+
+      setReplyState((current) =>
+        current?.message.id === message.id ? null : current
+      )
+    } catch (caught) {
+      toast.error(getApiErrorMessage(caught))
+      throw caught
+    }
+  }
+
+  const replyLabel = replyTarget
+    ? replyTarget.sender_id === ownId
+      ? "yourself"
+      : other?.name ?? "them"
+    : null
 
   return (
     <div className="flex h-[calc(100dvh-14rem)] min-h-[420px] flex-col overflow-hidden rounded-lg border border-border bg-card text-sm text-card-foreground shadow-sm sm:h-[calc(100vh-12rem)]">
@@ -187,7 +238,13 @@ export function MessageThread({ conversation }: { conversation: Conversation }) 
                       <span className="h-px flex-1 bg-border" />
                     </div>
                   ) : null}
-                  <MessageBubble message={message} />
+                  <MessageBubble
+                    message={message}
+                    otherName={other?.name ?? "them"}
+                    onReply={handleReply}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                  />
                 </div>
               )
             })}
@@ -197,7 +254,13 @@ export function MessageThread({ conversation }: { conversation: Conversation }) 
       </div>
 
       <div className="border-t border-border p-3">
-        <MessageInput sending={sending} onSend={handleSend} />
+        <MessageInput
+          sending={sending}
+          replyTarget={replyTarget}
+          replyLabel={replyLabel}
+          onCancelReply={() => setReplyState(null)}
+          onSend={handleSend}
+        />
       </div>
     </div>
   )

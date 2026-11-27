@@ -82,6 +82,7 @@ export interface Task {
   team_size: number
   type: TaskType
   reward: string
+  reward_currency: "USD"
   status: TaskStatus
   started_at: string | null
   completed_at: string | null
@@ -168,10 +169,12 @@ export interface ApplicationTaskSummary {
   title: string
   type: TaskType
   reward: string
+  reward_currency: "USD"
   status: TaskStatus
   team_size: number
   accepted_count: number
   pending_reviews_count: number
+  uploader: Pick<TaskUploader, "id" | "name" | "country"> | null
 }
 
 export interface Application {
@@ -266,6 +269,7 @@ export interface ConversationLastMessage {
   sender_id: number
   body: string
   created_at: string | null
+  is_deleted_for_everyone?: boolean
 }
 
 export interface Conversation {
@@ -279,6 +283,16 @@ export interface Conversation {
   updated_at: string | null
 }
 
+export interface MessageReplyPreview {
+  id: number
+  sender_id: number
+  body: string
+  created_at: string | null
+  is_deleted_for_everyone: boolean
+}
+
+export type MessageDeleteScope = "me" | "everyone"
+
 export interface Message {
   id: number
   conversation_id: number
@@ -286,6 +300,11 @@ export interface Message {
   body: string
   created_at: string | null
   read_at: string | null
+  edited_at: string | null
+  reply_to_id: number | null
+  reply_to: MessageReplyPreview | null
+  is_deleted_for_everyone: boolean
+  is_deleted_for_me: boolean
   /** Local-only flag for optimistic messages. */
   pending?: boolean
 }

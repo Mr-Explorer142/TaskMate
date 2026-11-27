@@ -3,8 +3,10 @@ import { Star } from "lucide-react"
 import { Link } from "react-router-dom"
 
 import { ApplicationStatusBadge } from "@/components/applications/ApplicationStatusBadge"
+import { CountryFlag } from "@/components/CountryFlag"
 import { StatusBadge } from "@/components/StatusBadge"
 import { LeaveTeamButton } from "@/components/tasks/LeaveTeamButton"
+import { TaskReward } from "@/components/tasks/TaskReward"
 import { TypeBadge } from "@/components/tasks/TypeBadge"
 import {
   AlertDialog,
@@ -18,7 +20,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { formatPostedDate, formatReward } from "@/lib/format"
+import { formatPostedDate } from "@/lib/format"
 import type { Application } from "@/types"
 
 export function ApplicationRow({
@@ -58,8 +60,16 @@ export function ApplicationRow({
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span className="font-medium text-foreground">
-              {formatReward(task.type, task.reward)}
+              <TaskReward
+                type={task.type}
+                reward={task.reward}
+                uploaderCountry={task.uploader?.country}
+                variant="compact"
+              />
             </span>
+            {task.uploader?.country ? (
+              <CountryFlag code={task.uploader.country} />
+            ) : null}
             <span>
               {task.accepted_count} / {task.team_size} slots filled
             </span>

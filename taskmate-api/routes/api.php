@@ -101,5 +101,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/conversations/{conversation}/messages', [ConversationController::class, 'messages']);
     Route::post('/conversations/{conversation}/messages', [ConversationController::class, 'sendMessage'])
         ->middleware('throttle:60,1');
+    Route::patch('/conversations/{conversation}/messages/{message}', [ConversationController::class, 'updateMessage'])
+        ->middleware('throttle:60,1');
+    Route::delete('/conversations/{conversation}/messages/{message}', [ConversationController::class, 'destroyMessage'])
+        ->middleware('throttle:60,1');
     Route::post('/conversations/{conversation}/read', [ConversationController::class, 'markRead']);
 });
