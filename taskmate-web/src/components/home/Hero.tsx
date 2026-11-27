@@ -1,3 +1,4 @@
+import { GraduationCap } from "lucide-react"
 import { Link } from "react-router-dom"
 
 import { Button } from "@/components/ui/button"
@@ -6,7 +7,14 @@ export function Hero() {
   return (
     <section className="relative mx-auto w-full max-w-6xl px-3 pb-16 pt-14 sm:px-4 sm:pb-24 sm:pt-20 lg:px-0 lg:py-0">
       <div className="grid items-center gap-6 rounded-3xl border border-border bg-background p-4 shadow-sm sm:gap-8 sm:p-6 lg:min-h-[32rem] lg:grid-cols-2 lg:items-stretch lg:gap-0 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
-        <div className="relative z-10 space-y-5 lg:py-12 lg:pl-4 lg:self-center">
+        <div className="relative z-10 space-y-4 sm:space-y-5 lg:py-12 lg:pl-4 lg:self-center">
+          <div className="inline-flex w-fit max-w-full items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium leading-snug text-primary sm:text-sm">
+            <GraduationCap className="size-3.5 shrink-0 sm:size-4" aria-hidden="true" />
+            <span>
+              Grow as a Fresher.{" "}
+              <span className="font-semibold">Explore Beyond Your Limits.</span>
+            </span>
+          </div>
           <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
             Find a team for your next task
           </h1>
