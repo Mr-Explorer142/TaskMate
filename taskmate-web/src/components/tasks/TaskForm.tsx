@@ -237,7 +237,7 @@ export function TaskForm({ task }: { task?: Task }) {
               <FormLabel>Title</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="e.g. Build a Laravel dashboard"
+                  placeholder="e.g. Plan a community event"
                   maxLength={120}
                   {...field}
                 />

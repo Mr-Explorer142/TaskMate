@@ -70,6 +70,7 @@ export interface TaskUploader {
   id: number
   name: string
   avatar_url: string | null
+  country: string | null
   average_rating: number | null
   reviews_count: number
 }

@@ -29,134 +29,136 @@ class DatabaseSeeder extends Seeder
      * @var array<int, string>
      */
     private const TASK_SKILLS = [
-        'Laravel', 'React', 'PHP', 'MySQL', 'UI Design', 'Figma', 'Content Writing',
-        'SEO', 'Python', 'Data Entry', 'Video Editing', 'Translation',
+        'Bookkeeping', 'Content Writing', 'Copywriting', 'Customer Support', 'Data Entry',
+        'Event Planning', 'Fundraising', 'Graphic Design', 'HR Admin', 'Lesson Planning',
+        'Legal Admin', 'Market Research', 'Photo Editing', 'Project Planning', 'Proofreading',
+        'Real Estate', 'Social Media', 'Survey Design', 'Translation', 'Video Editing',
     ];
 
     /**
      * Curated task briefs for seeded demo tasks.
      *
      * Each entry keeps a title and its description together so demo tasks read
-     * like real projects rather than generated filler.
+     * like real projects from a range of fields rather than generated filler.
      *
      * @var array<int, array{title: string, description: string}>
      */
     private const TASK_BRIEFS = [
         [
-            'title' => 'Build a Laravel dashboard for client reporting',
-            'description' => 'We need a small team to build an admin dashboard that shows client revenue, active projects, and overdue invoices. The work covers backend queries, a responsive React frontend, and basic role-based access. Please share a similar dashboard you have shipped before we start.',
+            'title' => 'Plan a community sports tournament',
+            'description' => 'We need help organising a weekend basketball tournament for 40 local players. Prepare the schedule, venue checklist, and a simple volunteer roster. Please flag any conflicts with venue availability early.',
         ],
         [
-            'title' => 'Design a mobile onboarding flow in Figma',
-            'description' => 'Our product needs a three-screen onboarding flow for first-time mobile users. We are looking for clean, accessible screens with reusable components and a short handoff document for developers. Include empty and error states in the deliverable.',
+            'title' => 'Create a social media content calendar',
+            'description' => 'A small bakery needs a four-week content calendar for Instagram and Facebook. Include daily captions, photo ideas, and a few promotional posts for weekend specials. Keep the tone warm and local.',
         ],
         [
-            'title' => 'Write SEO copy for a SaaS product launch',
-            'description' => 'We are launching a project-management tool and need a landing page, three blog posts, and meta descriptions. The copy should explain the product in plain language and target teams comparing tools. Send two drafts so we can choose a direction together.',
+            'title' => 'Reconcile a month of expense receipts',
+            'description' => 'We have a folder of scanned receipts from June and need them categorised in a spreadsheet. Match each receipt to the right project and total the amounts by category. Do not change any of the original files.',
         ],
         [
-            'title' => 'Clean and deduplicate customer records',
-            'description' => 'Our customer table contains duplicate contacts from several imports. We need someone to review the data, define safe matching rules, and clean the records without losing invoice history. Document the rules so the team can repeat the process monthly.',
+            'title' => 'Design a printable event flyer',
+            'description' => 'Design a single-page A5 flyer for a charity run. Use the supplied logo and event details, and deliver both a print-ready PDF and an editable source file. Keep the key information readable from a distance.',
         ],
         [
-            'title' => 'Build a React component library for our admin app',
-            'description' => 'We want a small set of shared React components: buttons, inputs, tables, modals, and form validation states. Each component should include usage examples and be easy to theme. The final handoff should include a short demo page showing every state.',
+            'title' => 'Write lesson plans for beginner English learners',
+            'description' => 'Prepare three 45-minute lesson plans for adult beginners covering introductions, daily routines, and shopping. Include learning goals, a short activity, and a simple homework task for each lesson.',
         ],
         [
-            'title' => 'Create a brand refresh for a local coffee shop',
-            'description' => 'The owner wants a warmer visual identity: logo variations, colour palette, typography, and social templates. Keep the existing handwritten logo as the starting point. Deliver editable source files along with a one-page brand guide.',
+            'title' => 'Edit product photos for an online store',
+            'description' => 'We have 30 raw product photos that need cropping, background cleanup, and consistent colour. Deliver web-ready images plus the edited source files, and keep each product\'s original filename.',
         ],
         [
-            'title' => 'Set up automated tests for a Laravel API',
-            'description' => 'Our task API has good coverage in a few places but none around reviews and team membership. Add feature tests for the main flows, keep the suite fast, and fix any issues the new tests uncover. Explain any test data you add.',
+            'title' => 'Draft a job description and interview scorecard',
+            'description' => 'Write a clear job description for a part-time customer support role and a simple scorecard for interviews. Keep the language inclusive and list the must-have skills separately from the nice-to-haves.',
         ],
         [
-            'title' => 'Migrate legacy blog content into the new CMS',
-            'description' => 'We have about 150 posts in an old WordPress export that need to move into our new CMS. Preserve publish dates, categories, images, and internal links. Deliver a migration script plus a short report on anything that could not be mapped.',
+            'title' => 'Summarise a competitor market study',
+            'description' => 'Read the supplied competitor brochures and prepare a two-page summary of pricing, positioning, and gaps. Use tables where helpful and finish with three practical recommendations.',
         ],
         [
-            'title' => 'Edit a 90-second product demo video',
-            'description' => 'We have raw screen recordings and a voiceover for a short product demo. Cut it to roughly 90 seconds, add captions, simple transitions, and our logo at the end. Deliver an MP4 plus the editable project file.',
+            'title' => 'Prepare a conference run-of-show',
+            'description' => 'Build a minute-by-minute run-of-show for a one-day community conference. Include speaker slots, breaks, setup notes, and a contingency plan for late arrivals.',
         ],
         [
-            'title' => 'Translate onboarding emails into Spanish',
-            'description' => 'We need five lifecycle emails translated into natural Spanish rather than literal word-for-word text. Keep the greeting and unsubscribe links intact, and flag any culture-specific references. Return a bilingual document for review.',
+            'title' => 'Write product descriptions for a retail catalogue',
+            'description' => 'Write short, accurate descriptions for 20 home-goods items. Each description should cover the main use, material, and one care instruction without inventing details.',
         ],
         [
-            'title' => 'Fix responsive layout issues on a marketing site',
-            'description' => 'Several landing pages break between 768px and 1024px, especially the pricing table and navigation. Find the root causes in the existing CSS, fix them without redesigning the pages, and check the result on real devices where possible.',
+            'title' => 'Create a plain-language patient explainer',
+            'description' => 'Turn a dense clinic handout into a one-page explainer that patients can understand. Keep the medical facts exactly as provided and avoid giving any new advice.',
         ],
         [
-            'title' => 'Implement password reset and email verification',
-            'description' => 'Add password reset and email verification to our Laravel application using the built-in features. Cover the notification templates, rate limits, and a simple settings page showing verification status. Include tests for the full flow.',
+            'title' => 'Organise a donor thank-you email sequence',
+            'description' => 'Draft three short thank-you emails for first-time donors. Keep them personal, include clear next steps, and make sure each email works with our existing template.',
         ],
         [
-            'title' => 'Audit and improve MySQL query performance',
-            'description' => 'A few reporting pages are slow because of unindexed filters and N+1 queries. Profile the top five endpoints, add the smallest safe indexes, and rewrite the worst queries. Share before-and-after timings with your pull request.',
+            'title' => 'Clean up a property listing spreadsheet',
+            'description' => 'Review 60 property listings for missing fields, duplicate entries, and inconsistent formatting. Return a cleaned spreadsheet with a short note explaining every change you made.',
         ],
         [
-            'title' => 'Build a Figma design system for a dashboard',
-            'description' => 'Create a compact design system with colour tokens, type scale, spacing rules, and 15 core components. The system should support both light and dark themes. Deliver a Figma library with clear naming and usage notes.',
+            'title' => 'Design a volunteer onboarding pack',
+            'description' => 'Create a short welcome pack for new volunteers with a checklist, code of conduct summary, and FAQ. Keep it to two pages and make it easy to print.',
         ],
         [
-            'title' => 'Write documentation for a developer onboarding guide',
-            'description' => 'New developers take too long to get the local app running. Write a step-by-step guide covering environment setup, seed data, tests, and common errors. Verify every command against a clean checkout before handing it over.',
+            'title' => 'Write a press release for a local initiative',
+            'description' => 'Draft a one-page press release announcing a neighbourhood clean-up day. Include who, what, when, where, and a quote from the organiser, using only the facts provided.',
         ],
         [
-            'title' => 'Integrate a payment gateway into a checkout flow',
-            'description' => 'We need a sandbox-ready payment integration with clear error handling and webhook verification. The checkout should show a summary before charging and a confirmation page afterwards. Do not touch live credentials at any point.',
+            'title' => 'Build a simple inventory tracking sheet',
+            'description' => 'Set up a spreadsheet to track stock on hand, reorder points, and supplier details for a small shop. Add basic formulas so low-stock items are highlighted automatically.',
         ],
         [
-            'title' => 'Populate a demo database with realistic content',
-            'description' => 'Our demo environment currently shows random Latin placeholder text on task pages. Replace it with curated titles and descriptions that read like real projects, and make sure a fresh seed produces the same result every time.',
+            'title' => 'Translate a community newsletter into French',
+            'description' => 'Translate a two-page community newsletter into natural French. Keep names, dates, and addresses unchanged, and flag any idioms that need a local alternative.',
         ],
         [
-            'title' => 'Design email templates for weekly reports',
-            'description' => 'We need two responsive email templates for a weekly summary: one for managers and one for clients. Keep them simple to edit in our existing sending tool. Include a plain-text fallback and a dark-mode friendly version.',
+            'title' => 'Review a lease summary for a small business',
+            'description' => 'Read the supplied lease summary and prepare a plain-language checklist of key dates, costs, and obligations. This is a summary only, not legal advice.',
         ],
         [
-            'title' => 'Review accessibility of a public task page',
-            'description' => 'Run an accessibility review of our public task listing and detail pages. Check keyboard navigation, focus states, colour contrast, and screen-reader labels. Provide a prioritised list of fixes and implement the quick wins.',
+            'title' => 'Plan a podcast episode outline',
+            'description' => 'Create a 30-minute podcast outline with an intro, three discussion segments, and closing notes. Include suggested questions for the guest and a short sponsor mention.',
         ],
         [
-            'title' => 'Build a small points ledger for a community app',
-            'description' => 'The app rewards members with points for completed work. We need a ledger that records escrow, release, and refund events with a clear audit trail. Add a balance page for users and tests that cover every state transition.',
+            'title' => 'Prepare a customer feedback survey',
+            'description' => 'Write a 10-question survey for customers of a local café. Mix multiple-choice and short-answer questions, and keep the whole survey under three minutes to complete.',
         ],
         [
-            'title' => 'Completed demo: landing page handoff',
-            'description' => 'A finished landing page handoff with responsive layouts, reviewed copy, and a short note explaining the design decisions to the team.',
+            'title' => 'Completed community garden handoff',
+            'description' => 'A finished handoff for the community garden project with the volunteer roster, supplier list, and a short note on what is still pending.',
         ],
         [
-            'title' => 'Completed paid: brand refresh',
-            'description' => 'A completed brand refresh covering logo variations, palette, typography, and editable source files for future marketing work.',
+            'title' => 'Completed paid: charity run flyer',
+            'description' => 'A completed flyer design for the charity run, including the print-ready PDF and editable source files.',
         ],
         [
-            'title' => 'Completed points: data cleanup',
-            'description' => 'A finished data cleanup pass that removed duplicate customer records while preserving invoice history and documenting the matching rules.',
+            'title' => 'Completed points: receipt reconciliation',
+            'description' => 'A finished reconciliation of a month of receipts, categorised by project with totals and a short change log.',
         ],
         [
-            'title' => 'Prepare a proposal for a client website',
-            'description' => 'Draft a short proposal for a five-page client website, including scope, timeline, and assumptions. Keep it editable so the team can adjust pricing before sending it to the client.',
+            'title' => 'Prepare a proposal for a school workshop',
+            'description' => 'Draft a short proposal for a weekend workshop, including scope, schedule, and assumptions. Keep it editable so the team can adjust the budget before sending.',
         ],
         [
-            'title' => 'Review pull requests for the reporting module',
-            'description' => 'Review a small set of pull requests in the reporting module, focusing on query correctness and test coverage. Leave clear notes for the authors and approve only when the changes are safe.',
+            'title' => 'Review vendor quotes for the office move',
+            'description' => 'Compare three vendor quotes for the office move and summarise cost, timing, and included services. Leave clear notes on any missing information.',
         ],
         [
-            'title' => 'Reopen a task after a teammate left',
-            'description' => 'A teammate withdrew after the work started, so this task needs a replacement. Review the current implementation, pick up the remaining items, and document anything that was left unfinished.',
+            'title' => 'Reopen an event after a volunteer withdrew',
+            'description' => 'A volunteer withdrew after setup began, so this event needs a replacement. Review the current checklist, pick up the remaining tasks, and document anything that was left unfinished.',
         ],
         [
-            'title' => 'Resume an in-progress API integration',
-            'description' => 'This integration was started last week and needs someone to finish the remaining endpoints, verify the error handling, and add the missing feature tests.',
+            'title' => 'Resume a newsletter production run',
+            'description' => 'This newsletter was started last week and needs someone to finish the layout, proofread the copy, and prepare the final send file.',
         ],
         [
-            'title' => 'Coordinate kickoff notes for a new project',
-            'description' => 'Collect the kickoff notes from the first planning call and share a short summary with the team, including owners and open questions for the next meeting.',
+            'title' => 'Coordinate notes from the first planning call',
+            'description' => 'Collect the notes from the first planning call and share a short summary with the team, including owners and open questions for the next meeting.',
         ],
         [
-            'title' => 'Draft a handoff checklist for the design team',
-            'description' => 'Put together a short handoff checklist covering design files, assets, copy, and open decisions so the next teammate can start without guesswork.',
+            'title' => 'Draft a handoff checklist for new volunteers',
+            'description' => 'Put together a short checklist covering shifts, contacts, equipment, and open decisions so the next volunteer can start without guesswork.',
         ],
     ];
 
@@ -174,7 +176,7 @@ class DatabaseSeeder extends Seeder
             'password' => 'password',
             'country' => 'BD',
             'bio' => 'Full-stack developer and designer who loves small, focused teams.',
-            'skills' => ['Laravel', 'React', 'UI Design'],
+            'skills' => ['Project Planning', 'Content Writing', 'Event Planning'],
         ]);
 
         $points->grantBonus($demo, $signupBonus, 'Welcome bonus');
@@ -206,7 +208,7 @@ class DatabaseSeeder extends Seeder
             'password' => 'password',
             'country' => 'US',
             'bio' => 'Frontend developer looking for focused collaborations.',
-            'skills' => ['React', 'Figma', 'UI Design'],
+            'skills' => ['Copywriting', 'Social Media', 'Proofreading'],
         ]);
 
         $bob = User::factory()->create([
@@ -215,7 +217,7 @@ class DatabaseSeeder extends Seeder
             'password' => 'password',
             'country' => 'GB',
             'bio' => 'Backend developer who enjoys Laravel and clean APIs.',
-            'skills' => ['PHP', 'Laravel', 'MySQL'],
+            'skills' => ['Bookkeeping', 'Data Entry', 'Market Research'],
         ]);
 
         $namedUsers = collect([$alice, $bob]);

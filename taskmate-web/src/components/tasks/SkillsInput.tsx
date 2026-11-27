@@ -19,7 +19,7 @@ export function TaskSkillsInput({
       maxSkillLength={40}
       label="Required skills"
       hint="Add up to 15 skills teammates should have."
-      placeholder="e.g. Laravel, React, UI Design"
+      placeholder="e.g. Event Planning, Copywriting, Bookkeeping"
     />
   )
 }

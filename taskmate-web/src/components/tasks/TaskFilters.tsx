@@ -17,18 +17,26 @@ import { useDebounce } from "@/hooks/useDebounce"
 import type { TaskFilters as TaskFiltersValue, TaskSort, TaskType } from "@/types"
 
 const SKILL_SUGGESTIONS = [
-  "Laravel",
-  "React",
-  "PHP",
-  "MySQL",
-  "UI Design",
-  "Figma",
+  "Bookkeeping",
   "Content Writing",
-  "SEO",
-  "Python",
+  "Copywriting",
+  "Customer Support",
   "Data Entry",
-  "Video Editing",
+  "Event Planning",
+  "Fundraising",
+  "Graphic Design",
+  "HR Admin",
+  "Lesson Planning",
+  "Legal Admin",
+  "Market Research",
+  "Photo Editing",
+  "Project Planning",
+  "Proofreading",
+  "Real Estate",
+  "Social Media",
+  "Survey Design",
   "Translation",
+  "Video Editing",
 ]
 
 const SORT_OPTIONS: Array<{ value: TaskSort; label: string }> = [

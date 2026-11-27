@@ -21,8 +21,10 @@ class TaskFactory extends Factory
      * @var array<int, string>
      */
     private const SKILLS = [
-        'Laravel', 'React', 'PHP', 'MySQL', 'UI Design', 'Figma', 'Content Writing',
-        'SEO', 'Python', 'Data Entry', 'Video Editing', 'Translation',
+        'Bookkeeping', 'Content Writing', 'Copywriting', 'Customer Support', 'Data Entry',
+        'Event Planning', 'Fundraising', 'Graphic Design', 'HR Admin', 'Lesson Planning',
+        'Legal Admin', 'Market Research', 'Photo Editing', 'Project Planning', 'Proofreading',
+        'Real Estate', 'Social Media', 'Survey Design', 'Translation', 'Video Editing',
     ];
 
     /**

@@ -128,7 +128,8 @@ it('filters by uploader', function () {
     $response = $this->getJson(taskListUrl(['filter' => ['uploader_id' => $uploader->id]]))->assertOk();
 
     expect($response->json('data'))->toHaveCount(1)
-        ->and($response->json('data.0.uploader.id'))->toBe($uploader->id);
+        ->and($response->json('data.0.uploader.id'))->toBe($uploader->id)
+        ->and($response->json('data.0.uploader.country'))->toBe($uploader->country);
 });
 
 it('sorts by allowed fields and defaults to newest first', function () {

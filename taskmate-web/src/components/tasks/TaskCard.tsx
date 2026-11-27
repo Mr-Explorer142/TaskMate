@@ -2,13 +2,15 @@ import type { ReactNode } from "react"
 import { Star } from "lucide-react"
 import { Link } from "react-router-dom"
 
+import { CountryFlag } from "@/components/CountryFlag"
 import { StatusBadge } from "@/components/StatusBadge"
 import { SlotsIndicator } from "@/components/tasks/SlotsIndicator"
+import { TaskReward } from "@/components/tasks/TaskReward"
 import { TypeBadge } from "@/components/tasks/TypeBadge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { formatDeadline, formatRatingLabel, formatReward } from "@/lib/format"
+import { formatDeadline, formatRatingLabel } from "@/lib/format"
 import { getInitials } from "@/lib/utils"
 import type { Task } from "@/types"
 
@@ -33,7 +35,11 @@ export function TaskCard({
             <StatusBadge status={task.status} />
           </div>
           <span className="text-base font-semibold text-foreground">
-            {formatReward(task.type, task.reward)}
+            <TaskReward
+              type={task.type}
+              reward={task.reward}
+              uploaderCountry={task.uploader?.country}
+            />
           </span>
         </div>
 
@@ -56,6 +62,9 @@ export function TaskCard({
             <span className="truncate">
               {task.uploader?.name ?? "TaskMate member"}
             </span>
+            {task.uploader?.country ? (
+              <CountryFlag code={task.uploader.country} />
+            ) : null}
             {task.uploader ? (
               <span className="flex items-center gap-1">
                 <Star className="size-3 fill-primary text-primary" />

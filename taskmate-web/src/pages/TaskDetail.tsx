@@ -10,12 +10,14 @@ import { getTask, getTaskTeam } from "@/api/tasks"
 import { ApplicationStatusBadge } from "@/components/applications/ApplicationStatusBadge"
 import { ApplyDialog } from "@/components/applications/ApplyDialog"
 import { MessageButton } from "@/components/chat/MessageButton"
+import { CountryFlag } from "@/components/CountryFlag"
 import { ErrorState } from "@/components/PageStates"
 import { PendingReviews } from "@/components/reviews/PendingReviews"
 import { StatusBadge } from "@/components/StatusBadge"
 import { CompleteProjectDialog } from "@/components/tasks/CompleteProjectDialog"
 import { LeaveTeamButton } from "@/components/tasks/LeaveTeamButton"
 import { SlotsIndicator } from "@/components/tasks/SlotsIndicator"
+import { TaskReward } from "@/components/tasks/TaskReward"
 import { TeamRoster } from "@/components/tasks/TeamRoster"
 import { TypeBadge } from "@/components/tasks/TypeBadge"
 import {
@@ -38,7 +40,6 @@ import {
   formatDeadline,
   formatPostedDate,
   formatRatingLabel,
-  formatReward,
 } from "@/lib/format"
 import { loginUrl, registerUrl } from "@/lib/redirect"
 import { getInitials } from "@/lib/utils"
@@ -340,8 +341,11 @@ export function TaskDetailPage() {
         </AvatarFallback>
       </Avatar>
       <div className="min-w-0">
-        <p className="truncate font-medium text-foreground">
+        <p className="flex items-center gap-1.5 truncate font-medium text-foreground">
           {task.uploader.name}
+          {task.uploader.country ? (
+            <CountryFlag code={task.uploader.country} />
+          ) : null}
         </p>
         <p className="flex items-center gap-1 text-sm text-muted-foreground">
           <Star className="size-3.5 fill-primary text-primary" />
@@ -370,7 +374,11 @@ export function TaskDetailPage() {
         </h1>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
           <span className="flex items-center gap-1.5 font-medium text-foreground">
-            {formatReward(task.type, task.reward)}
+            <TaskReward
+              type={task.type}
+              reward={task.reward}
+              uploaderCountry={task.uploader?.country}
+            />
           </span>
           <span className="flex items-center gap-1.5">
             <CalendarDays className="size-4" />
